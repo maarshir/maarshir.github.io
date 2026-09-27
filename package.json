@@ -1,0 +1,11 @@
+{
+  "name": "maarshir.github.io",
+  "private": true,
+  "description": "Сайт-резюме Ивана Капустина: обычный режим и пиксельный городок",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test",
+    "start": "python3 -m http.server 8000"
+  }
+}

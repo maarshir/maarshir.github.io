@@ -1,0 +1,24 @@
+name: Тесты
+
+# Проверка на каждый push в main и в рабочие ветки, на запросы на слияние и раз в неделю.
+# Слиянием веток agent/ занимается agent-merge.yml, этот файл только проверяет.
+on:
+  push:
+    branches: [main, 'work/**']
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Синтаксис
+        run: for f in $(git ls-files '*.js' '*.mjs'); do node --check "$f"; done
+      - name: Тесты
+        run: npm test
