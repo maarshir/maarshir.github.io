@@ -1,9 +1,13 @@
 /* Городок и переключение режимов.
-   Без JavaScript класса js нет, и видна только обычная страница.
+   Без JavaScript класса js нет, и видна только главная страница.
    Класс town-first ставит встроенный скрипт в <head> и потом js/town/main.mjs. */
 
 .town, .to-town, .town-fallback { display: none; }
-.js .to-town { display: block; margin: 0 0 8px; text-align: right; }
+.js .to-town {
+  display: block; margin: 8px 0 28px; padding: 16px 20px;
+  border: var(--px) dashed var(--grass-dark); color: var(--muted);
+}
+.js .to-town p { margin-bottom: 12px; }
 
 html.town-first, html.town-first body { overflow: hidden; height: 100%; }
 .town-first body { padding: 0; background: #2f5a2c; }
@@ -113,7 +117,7 @@ html.town-first, html.town-first body { overflow: hidden; height: 100%; }
 }
 
 /* Если модуль городка не загрузился (старый браузер, ошибка сети), гость не остаётся
-   перед пустым экраном: видна ссылка на обычный режим. */
+   перед пустым экраном: видна ссылка на главную. */
 .town-first:not(.town-ready) .town-fallback {
   display: block; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   padding: 16px 20px; text-align: center;

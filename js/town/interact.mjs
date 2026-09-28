@@ -41,7 +41,7 @@ export function hintText(b) {
 // Содержимое окна для здания. Возвращает простой объект:
 // title, place (подпись над заголовком), paragraphs (печатаются по очереди),
 // points (список), tags (стек), links [{ label, url, external }].
-// Данные те же, что у обычного режима: data/profile.json и data/projects.json.
+// Данные те же, что у главной страницы: data/profile.json и data/projects.json.
 export function dialogFor(b, profile, projects) {
   if (b.kind === 'project') {
     const p = (projects || []).find((item) => item.building === b.name);
@@ -62,11 +62,11 @@ export function dialogFor(b, profile, projects) {
     return {
       title: profile.name,
       place: b.name,
-      // Коротко: полный рассказ есть в обычном режиме, окно не должно закрывать весь экран.
+      // Коротко: полный рассказ есть на главной, окно не должно закрывать весь экран.
       paragraphs: [profile.role + '.', profile.direction, profile.about[0], profile.lookingFor],
       points: [],
       tags: [],
-      links: [{ label: 'Всё обо мне за 30 секунд', url: '#cv', external: false }],
+      links: [{ label: 'На главную', url: '#cv', external: false }],
     };
   }
   if (b.kind === 'contacts') {
@@ -111,10 +111,10 @@ function missing(b) {
     missing: true,
     title: b.name,
     place: b.name,
-    paragraphs: ['Данные не загрузились. Всё то же самое есть в обычном режиме.'],
+    paragraphs: ['Данные не загрузились. Всё то же самое есть на главной странице.'],
     points: [],
     tags: [],
-    links: [{ label: 'Обычный режим', url: '#cv', external: false }],
+    links: [{ label: 'На главную', url: '#cv', external: false }],
   };
 }
 

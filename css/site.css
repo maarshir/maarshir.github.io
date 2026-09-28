@@ -56,7 +56,7 @@ body {
   padding-bottom: 20px;
 }
 
-h1, h2, h3, .btn, .card-place, .role, .tags li, .contact-label, .skip {
+h1, h2, h3, .btn, .role, .tags li, .contact-label, .skip, .more summary {
   font-family: var(--font-pixel);
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -85,16 +85,22 @@ a:hover { color: var(--roof); }
 }
 .panel, .card { background: var(--panel); padding: 20px; margin: 0 0 28px; }
 
-.hero { display: flex; gap: 28px; align-items: center; margin: 12px 0 32px; }
+/* Первый экран: слева кто это и куда нажать, справа место под живую сцену и чат.
+   Читается за несколько секунд: имя, одна фраза, кнопки. */
+.hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: center;
+  min-height: min(62vh, 560px); margin: 0 0 24px; padding: 24px 0;
+}
 .hero .avatar {
-  flex: none; width: 160px; height: 160px; padding: 8px;
+  display: block; width: 200px; height: 200px; padding: 10px;
   background: var(--sky);
   image-rendering: pixelated;
 }
 .hero-text { min-width: 0; }
-.role { font-size: 1.4rem; color: var(--roof); margin-bottom: 0.5em; }
+.role { font-size: 1.5rem; color: var(--roof); margin-bottom: 0.5em; }
+.pitch { font-size: 1.2rem; max-width: 34em; }
 .looking { font-weight: 600; }
-.hero-links, .card-links { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
+.hero-links, .card-links { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 0; }
 
 .btn {
   display: inline-block; padding: 6px 14px;
@@ -103,16 +109,29 @@ a:hover { color: var(--roof); }
 }
 .btn:hover { color: #2b2139; transform: translate(-2px, -2px); box-shadow: calc(var(--px) + 2px) calc(var(--px) + 2px) 0 var(--shadow); }
 .btn:active { transform: translate(var(--px), var(--px)); box-shadow: none; }
+/* Главная кнопка первого экрана заметнее остальных. */
+.btn-main { background: var(--roof); color: #fffaf0; }
+.btn-main:hover { color: #fffaf0; }
 
 .section-title {
   display: inline-block; background: var(--roof); color: #fffaf0;
   padding: 4px 14px; border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow);
 }
+.section-title-quiet { background: var(--grass-dark); }
+.section-note { color: var(--muted); margin-top: -0.4em; }
+#projects, #personal { scroll-margin-top: 16px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin: 8px 0 28px; }
 .cards .card { margin: 0; display: flex; flex-direction: column; }
 .cards .card .card-links { margin-top: auto; padding-top: 12px; }
-.card-place { color: var(--muted); font-size: 1.1rem; margin: 0 0 4px; }
-.card-place::before { content: '▣ '; color: var(--grass-dark); }
+.card h3 { margin-bottom: 0.3em; }
+.card-line { font-size: 1.05rem; }
+.card .tags { margin-bottom: 12px; }
+
+/* Подробности на карточке свёрнуты: список проектов читается с одного взгляда. */
+.more summary { cursor: pointer; color: var(--muted); font-size: 1.15rem; width: max-content; }
+.more summary:hover { color: var(--roof); }
+.more[open] summary { margin-bottom: 8px; }
+.more p { font-size: 0.95rem; }
 
 .points { padding-left: 1.1em; margin: 0 0 12px; }
 .points li { margin: 0 0 4px; }
@@ -121,10 +140,10 @@ a:hover { color: var(--roof); }
 .tags { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .tags li { border: 2px solid var(--ink); padding: 0 8px; font-size: 1.1rem; background: var(--paper); }
 
-.board { background: #6b4430; color: #fffaf0; }
-.board h2 { color: #f0c265; }
+.now { border-left: var(--px) solid var(--gold); padding-left: 12px; }
 
-.two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px; }
+.two-cols h3 { font-size: 1.3rem; color: var(--muted); }
 .timeline { list-style: none; padding: 0; margin: 0; }
 .timeline li { margin: 0 0 14px; padding-left: 16px; border-left: var(--px) solid var(--grass); }
 .timeline strong, .timeline span { display: block; }
@@ -139,16 +158,22 @@ a:hover { color: var(--roof); }
 
 @media (max-width: 640px) {
   body { font-size: 16px; }
-  .hero { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .hero .avatar { width: 112px; height: 112px; }
+  .hero { grid-template-columns: 1fr; gap: 16px; min-height: 0; padding: 8px 0; }
+  .hero-side { order: -1; }
+  .hero .avatar { width: 96px; height: 96px; padding: 6px; }
+  .pitch { font-size: 1.1rem; }
   .two-cols { grid-template-columns: 1fr; gap: 0; }
   .panel, .card { padding: 16px; }
 }
 
 @media print {
   body { background: #fff; color: #000; padding: 0; }
-  .skip, .footer, .hero-links, .card-links { display: none; }
+  .skip, .footer, .hero-links, .card-links, .more summary { display: none; }
+  .hero { min-height: 0; padding: 0; }
   .panel, .card, .hero .avatar { box-shadow: none; border-width: 2px; }
-  .board { background: none; color: inherit; }
-  .board h2 { color: inherit; }
+}
+
+/* В тёмной теме красный светлее, и белый текст на нём читается плохо: берём тёмный. */
+@media (prefers-color-scheme: dark) {
+  .btn-main, .btn-main:hover, .section-title { color: #2b2139; }
 }

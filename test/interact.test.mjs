@@ -83,7 +83,7 @@ test('Дом, Почта и доска берут тексты из data/profile
   const home = dialogFor(byId('home'), profile, projects);
   assert.equal(home.title, profile.name);
   for (const t of [profile.direction, profile.lookingFor, profile.about[0]]) assert.ok(home.paragraphs.includes(t));
-  assert.ok(home.links.some((l) => l.url === '#cv'), 'из Дома есть путь в обычный режим');
+  assert.ok(home.links.some((l) => l.url === '#cv'), 'из Дома есть путь на главную');
 
   const post = dialogFor(byId('post'), profile, projects);
   assert.deepEqual(post.links.map((l) => l.url), profile.contacts.map((c) => c.url));
@@ -106,12 +106,12 @@ test('у каждого здания непустое окно с безопас
   }
 });
 
-test('если данные не загрузились, окно ведёт в обычный режим', () => {
+test('если данные не загрузились, окно ведёт на главную', () => {
   for (const b of BUILDINGS) {
     const d = dialogFor(b, null, null);
     if (b.kind === 'well') continue;
     assert.ok(d.missing, b.name);
-    assert.deepEqual(d.links, [{ label: 'Обычный режим', url: '#cv', external: false }]);
+    assert.deepEqual(d.links, [{ label: 'На главную', url: '#cv', external: false }]);
   }
 });
 

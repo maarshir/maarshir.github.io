@@ -4,30 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Иван Капустин, разработчик</title>
-<meta name="description" content="Иван Капустин: веб-приложения, боты и автоматизация, расту в сторону ИИ-инженерии. Проекты promptdiff, doc-answers, token-counter, личный ассистент и Wishly.">
+<meta name="description" content="Иван Капустин: веб-приложения, боты и автоматизация, расту в сторону ИИ-инженерии. Проекты promptdiff и doc-answers, резюме и контакты.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="fonts/tiny5.css">
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="css/town.css">
 <script>
-// Решаем до отрисовки, что показать первым, чтобы страница не мигала.
+// Городок открывается только по адресу /#town, решаем до отрисовки, чтобы не мигало.
 // То же правило в js/town/mode.mjs, тест следит, чтобы они совпадали.
-(function () {
-  var h = location.hash;
-  var town = h === '#town' || ((h === '' || h === '#') && window.innerWidth >= 760);
-  document.documentElement.className = 'js' + (town ? ' town-first' : '');
-})();
+document.documentElement.className = 'js' + (location.hash === '#town' ? ' town-first' : '');
 </script>
 <script type="module" src="js/town/main.mjs"></script>
 </head>
 <body>
 <a class="skip" href="#projects">К проектам</a>
 <section id="town" class="town" aria-label="Пиксельный городок">
-<canvas id="town-canvas" tabindex="0" role="img" aria-label="Карта городка сверху: Дом Ивана, Арена, Библиотека, Счётная контора, Мастерская, Почта, Сад желаний, площадь с фонтаном и пруд. Всё то же самое есть в обычном режиме."></canvas>
+<canvas id="town-canvas" tabindex="0" role="img" aria-label="Карта городка сверху: Дом Ивана, Арена, Библиотека, Счётная контора, Мастерская, Почта, Сад желаний, площадь с фонтаном и пруд. Всё то же самое есть на главной странице."></canvas>
 <div class="town-bar">
 <p class="town-name"><strong>Иван Капустин</strong><span>Разработчик. Веб-приложения, боты, автоматизация</span></p>
-<a class="btn town-cv" href="#cv">Нет времени гулять? Всё обо мне за 30 секунд</a>
+<a class="btn town-cv" href="#cv">Вернуться на главную</a>
 </div>
 <p class="town-help">Ходить: стрелки, WASD или клик по карте. У двери: Enter или пробел</p>
 <button type="button" class="town-hint" hidden></button>
@@ -38,96 +34,96 @@
 <div class="dlg-body"></div>
 <div class="dlg-actions"><span class="dlg-links"></span><button type="button" class="btn dlg-close">Закрыть</button></div>
 </div>
-<p class="town-fallback">Городок не загрузился. <a href="#cv">Открыть обычный режим</a></p>
+<p class="town-fallback">Городок не загрузился. <a href="#cv">Вернуться на главную</a></p>
 </section>
 <main id="cv" class="page">
-<p class="to-town"><a class="btn" href="#town">Погулять по городку</a></p>
 <!-- cv:start (собирается из data/ командой npm run build, руками не править) -->
-<header class="hero">
-<svg class="avatar" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="1" width="6" height="1" fill="#3b2a20"/><rect x="4" y="2" width="8" height="1" fill="#3b2a20"/><rect x="3" y="3" width="10" height="1" fill="#3b2a20"/><rect x="3" y="4" width="2" height="1" fill="#3b2a20"/><rect x="5" y="4" width="6" height="1" fill="#f1c9a5"/><rect x="11" y="4" width="2" height="1" fill="#3b2a20"/><rect x="3" y="5" width="1" height="1" fill="#3b2a20"/><rect x="4" y="5" width="8" height="1" fill="#f1c9a5"/><rect x="12" y="5" width="1" height="1" fill="#3b2a20"/><rect x="3" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="5" y="6" width="1" height="1" fill="#2b2139"/><rect x="6" y="6" width="4" height="1" fill="#f1c9a5"/><rect x="10" y="6" width="1" height="1" fill="#2b2139"/><rect x="11" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="3" y="7" width="10" height="1" fill="#f1c9a5"/><rect x="3" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="6" y="8" width="4" height="1" fill="#b5534a"/><rect x="10" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="4" y="9" width="8" height="1" fill="#f1c9a5"/><rect x="6" y="10" width="4" height="1" fill="#f1c9a5"/><rect x="3" y="11" width="10" height="1" fill="#4a78b5"/><rect x="2" y="12" width="5" height="1" fill="#4a78b5"/><rect x="7" y="12" width="2" height="1" fill="#f4ecd8"/><rect x="9" y="12" width="5" height="1" fill="#4a78b5"/><rect x="2" y="13" width="12" height="1" fill="#4a78b5"/><rect x="1" y="14" width="14" height="1" fill="#4a78b5"/><rect x="1" y="15" width="14" height="1" fill="#4a78b5"/></svg>
+<header class="hero" id="top">
 <div class="hero-text">
 <h1>Иван Капустин</h1>
 <p class="role">Разработчик. Веб-приложения, боты, автоматизация</p>
-<p>Расту в сторону ИИ-инженерии: приложения на языковых моделях и проверка качества их ответов.</p>
+<p class="pitch">Расту в сторону ИИ-инженерии: приложения на языковых моделях и проверка качества их ответов.</p>
 <p class="looking">Открыт для стажировки и предложений о работе.</p>
-<p class="hero-links"><a class="btn" href="https://t.me/kaioann" target="_blank" rel="noopener">Телеграм</a>
-<a class="btn" href="mailto:ivan_ius@mail.ru">Почта</a>
-<a class="btn" href="https://github.com/maarshir" target="_blank" rel="noopener">Гитхаб</a></p>
+<nav class="hero-links" aria-label="Главное">
+<a class="btn btn-main" href="#projects">Проекты</a>
+<a class="btn" href="https://t.me/kaioann" target="_blank" rel="noopener">Написать в Телеграм</a>
+<a class="btn" href="https://github.com/maarshir" target="_blank" rel="noopener">Гитхаб</a>
+</nav>
+</div>
+<div class="hero-side">
+<svg class="avatar" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="1" width="6" height="1" fill="#3b2a20"/><rect x="4" y="2" width="8" height="1" fill="#3b2a20"/><rect x="3" y="3" width="10" height="1" fill="#3b2a20"/><rect x="3" y="4" width="2" height="1" fill="#3b2a20"/><rect x="5" y="4" width="6" height="1" fill="#f1c9a5"/><rect x="11" y="4" width="2" height="1" fill="#3b2a20"/><rect x="3" y="5" width="1" height="1" fill="#3b2a20"/><rect x="4" y="5" width="8" height="1" fill="#f1c9a5"/><rect x="12" y="5" width="1" height="1" fill="#3b2a20"/><rect x="3" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="5" y="6" width="1" height="1" fill="#2b2139"/><rect x="6" y="6" width="4" height="1" fill="#f1c9a5"/><rect x="10" y="6" width="1" height="1" fill="#2b2139"/><rect x="11" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="3" y="7" width="10" height="1" fill="#f1c9a5"/><rect x="3" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="6" y="8" width="4" height="1" fill="#b5534a"/><rect x="10" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="4" y="9" width="8" height="1" fill="#f1c9a5"/><rect x="6" y="10" width="4" height="1" fill="#f1c9a5"/><rect x="3" y="11" width="10" height="1" fill="#4a78b5"/><rect x="2" y="12" width="5" height="1" fill="#4a78b5"/><rect x="7" y="12" width="2" height="1" fill="#f4ecd8"/><rect x="9" y="12" width="5" height="1" fill="#4a78b5"/><rect x="2" y="13" width="12" height="1" fill="#4a78b5"/><rect x="1" y="14" width="14" height="1" fill="#4a78b5"/><rect x="1" y="15" width="14" height="1" fill="#4a78b5"/></svg>
 </div>
 </header>
-
-<section class="panel" id="about" aria-labelledby="about-title">
-<h2 id="about-title">Обо мне</h2>
-<p>Делаю веб-приложения, ботов в Телеграме и автоматизацию на Питоне и JavaScript. Работаю на фрилансе и учусь в магистратуре.</p>
-<p>Последние проекты про языковые модели: как сравнивать промпты на наборе задач с чёткими проверками, сколько стоит каждый запрос и как отвечать по своим документам со ссылкой на источник, а не выдумывать.</p>
-</section>
 
 <section id="projects" aria-labelledby="projects-title">
 <h2 id="projects-title" class="section-title">Проекты</h2>
 <div class="cards">
 <article class="card" id="project-promptdiff">
-<p class="card-place">Арена</p>
 <h3>promptdiff</h3>
-<p>Прогоняет несколько вариантов промпта по одним и тем же задачам и показывает, где ответы разошлись: на каких задачах один вариант прошёл проверки, а другой нет.</p>
-<ul class="points"><li>Чёткие проверки ответов вместо оценки на глаз</li><li>Асинхронные запросы с повторами, ограничением частоты и паузой по retry-after</li><li>Кэш ответов на диске и цена каждого варианта через token-counter</li><li>Два поставщика: Anthropic и Groq с бесплатным уровнем</li></ul>
-<ul class="tags" aria-label="Технологии"><li>Python</li><li>asyncio</li><li>httpx</li><li>pytest</li></ul>
-<p class="card-links"><a class="btn" href="https://github.com/maarshir/promptdiff-" target="_blank" rel="noopener">Код на Гитхабе</a></p>
+<p class="card-line">Сравнивает варианты промпта на наборе задач и показывает, где они разошлись.</p>
+<ul class="tags" aria-label="Технологии"><li>Python</li><li>asyncio</li><li>httpx</li></ul>
+<details class="more"><summary>Подробнее</summary><p>Прогоняет несколько вариантов промпта по одним и тем же задачам и показывает, где ответы разошлись: на каких задачах один вариант прошёл проверки, а другой нет.</p><ul class="points"><li>Чёткие проверки ответов вместо оценки на глаз</li><li>Асинхронные запросы с повторами, ограничением частоты и паузой по retry-after</li><li>Кэш ответов на диске и цена каждого варианта через token-counter</li><li>Два поставщика: Anthropic и Groq с бесплатным уровнем</li></ul></details>
+<p class="card-links"><a class="btn" href="https://github.com/maarshir/promptdiff-" target="_blank" rel="noopener">Код</a></p>
 </article>
 <article class="card" id="project-doc-answers">
-<p class="card-place">Библиотека</p>
 <h3>doc-answers</h3>
-<p>Отвечает на вопросы по папке со своими документами строго по найденным кускам, со ссылкой на источник, а если ответа нет, так и говорит.</p>
-<ul class="points"><li>Поиск BM25 по основам слов, без векторной базы</li><li>Ссылки модели на источники проверяются кодом после ответа</li><li>Набор вопросов отдельно проверяет поиск и ответы модели</li><li>Демонстрационный режим без ключа</li></ul>
-<ul class="tags" aria-label="Технологии"><li>Python</li><li>RAG</li><li>BM25</li><li>pytest</li></ul>
-<p class="card-links"><a class="btn" href="https://github.com/maarshir/doc-answers" target="_blank" rel="noopener">Код на Гитхабе</a></p>
-</article>
-<article class="card" id="project-token-counter">
-<p class="card-place">Счётная контора</p>
-<h3>token-counter</h3>
-<p>Считает стоимость запросов к языковым моделям по токенам из ответа API или прикидкой ещё до отправки.</p>
-<ul class="points"><li>Точная денежная арифметика в Decimal</li><li>Таблица цен, у каждой цены дата сверки и источник</li><li>Библиотека и командная строка, им считает цену promptdiff</li></ul>
-<ul class="tags" aria-label="Технологии"><li>Python</li><li>Decimal</li><li>CLI</li><li>pytest</li></ul>
-<p class="card-links"><a class="btn" href="https://github.com/maarshir/token-counter" target="_blank" rel="noopener">Код на Гитхабе</a></p>
-</article>
-<article class="card" id="project-assistant">
-<p class="card-place">Мастерская</p>
-<h3>Личный ассистент</h3>
-<p>Сайт и бот в Телеграме для режима дня: модель разбирает свободные фразы в действия с записями дня через JSON.</p>
-<ul class="points"><li>Защита от ошибок модели при разборе JSON</li><li>Доступ только для владельца, проверка секрета вебхука</li><li>Вечерние вопросы и напоминания от бота</li></ul>
-<ul class="tags" aria-label="Технологии"><li>Python</li><li>FastAPI</li><li>PostgreSQL</li><li>LLM</li></ul>
-<p class="card-links"><a class="btn" href="https://github.com/maarshir/assistant" target="_blank" rel="noopener">Код на Гитхабе</a></p>
-</article>
-<article class="card" id="project-wishly">
-<p class="card-place">Сад желаний</p>
-<h3>Wishly</h3>
-<p>Мини-приложение в Телеграме, где двое ведут общий список желаний: подарки, места и рестораны с фото, ценами и уровнем «хочу».</p>
-<ul class="points"><li>Изменения второго человека появляются сразу</li><li>Экранирование пользовательских данных и тесты на Node</li></ul>
-<ul class="tags" aria-label="Технологии"><li>JavaScript</li><li>Supabase</li><li>Tailwind</li></ul>
-<p class="card-links"><a class="btn" href="https://github.com/maarshir/Wishly" target="_blank" rel="noopener">Код на Гитхабе</a></p>
+<p class="card-line">Ответы по вашим документам со ссылкой на источник и честным отказом, если ответа нет.</p>
+<ul class="tags" aria-label="Технологии"><li>Python</li><li>RAG</li><li>BM25</li></ul>
+<details class="more"><summary>Подробнее</summary><p>Отвечает на вопросы по папке со своими документами строго по найденным кускам, со ссылкой на источник, а если ответа нет, так и говорит.</p><ul class="points"><li>Поиск BM25 по основам слов, без векторной базы</li><li>Ссылки модели на источники проверяются кодом после ответа</li><li>Набор вопросов отдельно проверяет поиск и ответы модели</li><li>Демонстрационный режим без ключа</li></ul></details>
+<p class="card-links"><a class="btn" href="https://github.com/maarshir/doc-answers" target="_blank" rel="noopener">Код</a></p>
 </article>
 </div>
 </section>
 
-<section class="panel board" id="now" aria-labelledby="now-title">
-<h2 id="now-title">Сейчас работаю над</h2>
-<p>Готовлю первые настоящие прогоны promptdiff и doc-answers на бесплатном уровне Groq и собираю этот сайт: по пиксельному городку уже можно погулять и зайти в здания с проектами, следующими в нём появятся смена дня и ночи и жители.</p>
+<section id="personal" aria-labelledby="personal-title">
+<h2 id="personal-title" class="section-title section-title-quiet">Личные проекты</h2>
+<p class="section-note">Небольшие вещи, которые я сделал для себя.</p>
+<div class="cards">
+<article class="card" id="project-assistant">
+<h3>Личный ассистент</h3>
+<p class="card-line">Сайт и бот в Телеграме для записей дня, свободные фразы и голосовые разбирает модель.</p>
+<ul class="tags" aria-label="Технологии"><li>Python</li><li>FastAPI</li><li>PostgreSQL</li></ul>
+<details class="more"><summary>Подробнее</summary><p>Сайт и бот в Телеграме для режима дня: модель разбирает свободные фразы в действия с записями дня через JSON.</p><ul class="points"><li>Защита от ошибок модели при разборе JSON</li><li>Доступ только для владельца, проверка секрета вебхука</li><li>Вечерние вопросы и напоминания от бота</li></ul></details>
+<p class="card-links"><a class="btn" href="https://github.com/maarshir/assistant" target="_blank" rel="noopener">Код</a></p>
+</article>
+<article class="card" id="project-wishly">
+<h3>Wishly</h3>
+<p class="card-line">Общий список желаний на двоих в Телеграме.</p>
+<ul class="tags" aria-label="Технологии"><li>JavaScript</li><li>Supabase</li><li>Tailwind</li></ul>
+<details class="more"><summary>Подробнее</summary><p>Мини-приложение в Телеграме, где двое ведут общий список желаний: подарки, места и рестораны с фото, ценами и уровнем «хочу».</p><ul class="points"><li>Изменения второго человека появляются сразу</li><li>Экранирование пользовательских данных и тесты на Node</li></ul></details>
+<p class="card-links"><a class="btn" href="https://github.com/maarshir/Wishly" target="_blank" rel="noopener">Код</a></p>
+</article>
+<article class="card" id="project-token-counter">
+<h3>token-counter</h3>
+<p class="card-line">Токены и стоимость запросов к языковым моделям.</p>
+<ul class="tags" aria-label="Технологии"><li>Python</li><li>Decimal</li><li>CLI</li></ul>
+<details class="more"><summary>Подробнее</summary><p>Считает стоимость запросов к языковым моделям по токенам из ответа API или прикидкой ещё до отправки.</p><ul class="points"><li>Точная денежная арифметика в Decimal</li><li>Таблица цен, у каждой цены дата сверки и источник</li><li>Библиотека и командная строка, им считает цену promptdiff</li></ul></details>
+<p class="card-links"><a class="btn" href="https://github.com/maarshir/token-counter" target="_blank" rel="noopener">Код</a></p>
+</article>
+</div>
 </section>
 
+<section class="panel" id="about" aria-labelledby="about-title">
+<h2 id="about-title">Обо мне и учёба</h2>
+<p>Делаю веб-приложения, ботов в Телеграме и автоматизацию на Питоне и JavaScript. Работаю на фрилансе и учусь в магистратуре.</p>
+<p>Последние проекты про языковые модели: как сравнивать промпты на наборе задач с чёткими проверками, сколько стоит каждый запрос и как отвечать по своим документам со ссылкой на источник, а не выдумывать.</p>
+<p class="now" id="now"><strong>Сейчас:</strong> Готовлю первые настоящие прогоны promptdiff и doc-answers на бесплатном уровне Groq и доделываю этот сайт.</p>
 <div class="two-cols">
-<section class="panel" id="education" aria-labelledby="education-title">
-<h2 id="education-title">Образование</h2>
+<div id="education">
+<h3>Образование</h3>
 <ul class="timeline">
 <li><strong>Магистратура</strong><span>Учусь сейчас.</span></li>
 <li><strong>РТУ МИРЭА</strong><span>Направление: фулстек-разработка. Выпускная работа: «Разработка мобильного приложения для контроля личных задач и напоминаний».</span></li>
 </ul>
-</section>
-<section class="panel" id="work" aria-labelledby="work-title">
-<h2 id="work-title">Работа</h2>
+</div>
+<div id="work">
+<h3>Работа</h3>
 <ul class="timeline">
 <li><strong>Фриланс</strong><span>Веб-приложения, боты и автоматизация под задачи заказчиков.</span></li>
 </ul>
-</section>
 </div>
+</div>
+</section>
 
 <section class="panel" id="stack" aria-labelledby="stack-title">
 <h2 id="stack-title">Стек</h2>
@@ -149,6 +145,10 @@
 </ul>
 </section>
 <!-- cv:end -->
+<section class="to-town" aria-label="Пасхалка">
+<p>Все проекты выше можно найти и по-другому: они стоят домами в маленьком пиксельном городке, по которому ходит персонаж.</p>
+<a class="btn" href="#town">Погулять по пиксельному городку</a>
+</section>
 </main>
 <footer class="footer">
 <p>Сайт сделан вручную, без фреймворков, весь пиксель-арт нарисован для него. <a href="https://github.com/maarshir/maarshir.github.io" target="_blank" rel="noopener">Код сайта</a>. Шрифт Tiny5 под лицензией <a href="fonts/OFL-Tiny5.txt">SIL OFL 1.1</a>.</p>
