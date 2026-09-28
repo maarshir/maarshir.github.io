@@ -8,8 +8,8 @@ import { tileFeet } from './physics.mjs';
 // Чуть меньше тайла: у соседних дверей зоны не пересекаются, а попасть легко.
 export const NEAR_PX = 12;
 
-// Скорость печатной машинки, символов в секунду.
-export const TYPE_CPS = 45;
+// Печатная машинка общая с чатом на главной, поэтому живёт в js/typewriter.mjs.
+export { TYPE_CPS, typedCounts, typingDone, typingDuration } from '../typewriter.mjs';
 
 // Здание, у двери которого стоит гость, или null. Если рядом две двери, ближняя.
 export function nearbyBuilding(x, y, buildings = BUILDINGS) {
@@ -116,25 +116,4 @@ function missing(b) {
     tags: [],
     links: [{ label: 'На главную', url: '#cv', external: false }],
   };
-}
-
-// Печатная машинка: сколько символов каждого абзаца видно через elapsed секунд.
-// Абзацы печатаются по очереди. При уменьшении движения всё видно сразу.
-export function typedCounts(paragraphs, elapsed, { cps = TYPE_CPS, reducedMotion = false } = {}) {
-  let budget = reducedMotion ? Infinity : Math.max(0, Math.floor(elapsed * cps));
-  return paragraphs.map((text) => {
-    const n = Math.min(text.length, budget);
-    budget -= n;
-    return n;
-  });
-}
-
-export function typingDone(paragraphs, counts) {
-  return paragraphs.every((text, i) => counts[i] >= text.length);
-}
-
-// Сколько секунд печатается окно целиком: чтобы «пропуск» сразу показывал всё.
-export function typingDuration(paragraphs, cps = TYPE_CPS) {
-  const total = paragraphs.reduce((sum, t) => sum + t.length, 0);
-  return total / cps;
 }
