@@ -50,6 +50,68 @@ html.town-first, html.town-first body { overflow: hidden; height: 100%; }
   padding: 4px 10px; font-size: 0.9rem; pointer-events: none;
 }
 
+/* Текст только для читалки экрана. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Подсказка у двери: пиксельная табличка над входом. Стоит в левом верхнем углу
+   городка и сдвигается transform'ом каждый кадр, без пересчёта раскладки. */
+.town-hint {
+  position: absolute; left: 0; top: 0;
+  margin-top: -6px;
+  padding: 2px 10px;
+  font: 400 1.05rem/1.3 var(--font-pixel);
+  color: var(--ink); background: var(--panel);
+  border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow);
+  white-space: nowrap; cursor: pointer;
+  animation: hint-bob 1.2s steps(2) infinite;
+}
+.town-hint[hidden] { display: none; }
+.town-hint:focus-visible { outline: var(--px) solid var(--focus); outline-offset: 2px; }
+@keyframes hint-bob { 50% { margin-top: -9px; } }
+
+/* Окно здания: как диалог в старой игре, внизу по центру. */
+.town-dialog {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  width: min(680px, calc(100% - 24px)); max-height: calc(100% - 110px); overflow: auto;
+  padding: 14px 20px 16px;
+  background: var(--panel); color: var(--ink);
+  border: var(--px) solid var(--ink);
+  box-shadow: 0 0 0 var(--px) var(--gold), var(--px) var(--px) 0 calc(var(--px) * 1.5) var(--shadow);
+  animation: dlg-in 160ms steps(4);
+}
+.town-dialog[hidden] { display: none; }
+.town-dialog:focus { outline: none; }
+.town-dialog:focus-visible { outline: 2px dashed var(--focus); outline-offset: -8px; }
+@keyframes dlg-in { from { transform: translateX(-50%) translateY(16px); opacity: 0; } }
+
+.dlg-place {
+  margin: 0; font: 400 1rem/1.2 var(--font-pixel); color: var(--roof);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.dlg-title { margin: 2px 0 8px; font-size: 1.8rem; line-height: 1.1; }
+.dlg-text { margin: 0 0 8px; }
+.dlg-rest { visibility: hidden; }             /* место под ещё не напечатанный текст занято заранее */
+.town-dialog:not(.typed) .dlg-text:has(.dlg-rest:not(:empty)) .dlg-typed:not(:empty)::after {
+  content: '▌'; color: var(--roof); margin-right: -0.6em;
+}
+.dlg-after { opacity: 0; transition: opacity 200ms steps(3); }
+.town-dialog.typed .dlg-after { opacity: 1; }
+.dlg-after .points { margin-top: 4px; }
+.dlg-actions {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;
+  margin-top: 12px;
+}
+.dlg-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.dlg-close { background: var(--paper); color: var(--ink); font-size: 1.1rem; }
+.dlg-close:hover { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .town-hint { animation: none; }
+}
+
 /* Если модуль городка не загрузился (старый браузер, ошибка сети), гость не остаётся
    перед пустым экраном: видна ссылка на обычный режим. */
 .town-first:not(.town-ready) .town-fallback {
@@ -60,6 +122,8 @@ html.town-first, html.town-first body { overflow: hidden; height: 100%; }
 
 @media (max-width: 640px) {
   .town-bar { flex-direction: column; }
+  .town-dialog { bottom: 8px; padding: 10px 14px 12px; max-height: calc(100% - 136px); }
+  .dlg-title { font-size: 1.5rem; }
   .town-name span { display: none; }
   .town-cv { font-size: 1.1rem; }
 }

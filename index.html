@@ -29,7 +29,15 @@
 <p class="town-name"><strong>Иван Капустин</strong><span>Разработчик. Веб-приложения, боты, автоматизация</span></p>
 <a class="btn town-cv" href="#cv">Нет времени гулять? Всё обо мне за 30 секунд</a>
 </div>
-<p class="town-help">Ходить: стрелки, WASD или клик по карте</p>
+<p class="town-help">Ходить: стрелки, WASD или клик по карте. У двери: Enter или пробел</p>
+<button type="button" class="town-hint" hidden></button>
+<p class="sr-only" id="town-live" aria-live="polite"></p>
+<div class="town-dialog" id="town-dialog" role="dialog" aria-modal="true" aria-labelledby="town-dialog-title" tabindex="-1" hidden>
+<p class="dlg-place" id="town-dialog-place"></p>
+<h2 class="dlg-title" id="town-dialog-title"></h2>
+<div class="dlg-body"></div>
+<div class="dlg-actions"><span class="dlg-links"></span><button type="button" class="btn dlg-close">Закрыть</button></div>
+</div>
 <p class="town-fallback">Городок не загрузился. <a href="#cv">Открыть обычный режим</a></p>
 </section>
 <main id="cv" class="page">
@@ -102,7 +110,7 @@
 
 <section class="panel board" id="now" aria-labelledby="now-title">
 <h2 id="now-title">Сейчас работаю над</h2>
-<p>Готовлю первые настоящие прогоны promptdiff и doc-answers на бесплатном уровне Groq и собираю этот сайт: по пиксельному городку уже можно погулять, следующими в нём оживут здания с проектами, смена дня и ночи и жители.</p>
+<p>Готовлю первые настоящие прогоны promptdiff и doc-answers на бесплатном уровне Groq и собираю этот сайт: по пиксельному городку уже можно погулять и зайти в здания с проектами, следующими в нём появятся смена дня и ночи и жители.</p>
 </section>
 
 <div class="two-cols">
