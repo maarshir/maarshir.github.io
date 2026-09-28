@@ -9,10 +9,31 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="fonts/tiny5.css">
 <link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/town.css">
+<script>
+// Решаем до отрисовки, что показать первым, чтобы страница не мигала.
+// То же правило в js/town/mode.mjs, тест следит, чтобы они совпадали.
+(function () {
+  var h = location.hash;
+  var town = h === '#town' || ((h === '' || h === '#') && window.innerWidth >= 760);
+  document.documentElement.className = 'js' + (town ? ' town-first' : '');
+})();
+</script>
+<script type="module" src="js/town/main.mjs"></script>
 </head>
 <body>
 <a class="skip" href="#projects">К проектам</a>
+<section id="town" class="town" aria-label="Пиксельный городок">
+<canvas id="town-canvas" tabindex="0" role="img" aria-label="Карта городка сверху: Дом Ивана, Арена, Библиотека, Счётная контора, Мастерская, Почта, Сад желаний, площадь с фонтаном и пруд. Всё то же самое есть в обычном режиме."></canvas>
+<div class="town-bar">
+<p class="town-name"><strong>Иван Капустин</strong><span>Разработчик. Веб-приложения, боты, автоматизация</span></p>
+<a class="btn town-cv" href="#cv">Нет времени гулять? Всё обо мне за 30 секунд</a>
+</div>
+<p class="town-help">Ходить: стрелки, WASD или клик по карте</p>
+<p class="town-fallback">Городок не загрузился. <a href="#cv">Открыть обычный режим</a></p>
+</section>
 <main id="cv" class="page">
+<p class="to-town"><a class="btn" href="#town">Погулять по городку</a></p>
 <!-- cv:start (собирается из data/ командой npm run build, руками не править) -->
 <header class="hero">
 <svg class="avatar" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="1" width="6" height="1" fill="#3b2a20"/><rect x="4" y="2" width="8" height="1" fill="#3b2a20"/><rect x="3" y="3" width="10" height="1" fill="#3b2a20"/><rect x="3" y="4" width="2" height="1" fill="#3b2a20"/><rect x="5" y="4" width="6" height="1" fill="#f1c9a5"/><rect x="11" y="4" width="2" height="1" fill="#3b2a20"/><rect x="3" y="5" width="1" height="1" fill="#3b2a20"/><rect x="4" y="5" width="8" height="1" fill="#f1c9a5"/><rect x="12" y="5" width="1" height="1" fill="#3b2a20"/><rect x="3" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="5" y="6" width="1" height="1" fill="#2b2139"/><rect x="6" y="6" width="4" height="1" fill="#f1c9a5"/><rect x="10" y="6" width="1" height="1" fill="#2b2139"/><rect x="11" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="3" y="7" width="10" height="1" fill="#f1c9a5"/><rect x="3" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="6" y="8" width="4" height="1" fill="#b5534a"/><rect x="10" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="4" y="9" width="8" height="1" fill="#f1c9a5"/><rect x="6" y="10" width="4" height="1" fill="#f1c9a5"/><rect x="3" y="11" width="10" height="1" fill="#4a78b5"/><rect x="2" y="12" width="5" height="1" fill="#4a78b5"/><rect x="7" y="12" width="2" height="1" fill="#f4ecd8"/><rect x="9" y="12" width="5" height="1" fill="#4a78b5"/><rect x="2" y="13" width="12" height="1" fill="#4a78b5"/><rect x="1" y="14" width="14" height="1" fill="#4a78b5"/><rect x="1" y="15" width="14" height="1" fill="#4a78b5"/></svg>
@@ -81,7 +102,7 @@
 
 <section class="panel board" id="now" aria-labelledby="now-title">
 <h2 id="now-title">Сейчас работаю над</h2>
-<p>Готовлю первые настоящие прогоны promptdiff и doc-answers на бесплатном уровне Groq и собираю этот сайт: скоро здесь появится пиксельный городок, по которому можно погулять.</p>
+<p>Готовлю первые настоящие прогоны promptdiff и doc-answers на бесплатном уровне Groq и собираю этот сайт: по пиксельному городку уже можно погулять, следующими в нём оживут здания с проектами, смена дня и ночи и жители.</p>
 </section>
 
 <div class="two-cols">

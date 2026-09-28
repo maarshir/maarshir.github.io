@@ -1,0 +1,71 @@
+/* Городок и переключение режимов.
+   Без JavaScript класса js нет, и видна только обычная страница.
+   Класс town-first ставит встроенный скрипт в <head> и потом js/town/main.mjs. */
+
+.town, .to-town, .town-fallback { display: none; }
+.js .to-town { display: block; margin: 0 0 8px; text-align: right; }
+
+html.town-first, html.town-first body { overflow: hidden; height: 100%; }
+.town-first body { padding: 0; background: #2f5a2c; }
+.town-first #cv, .town-first .footer, .town-first .skip { display: none; }
+
+.town-first .town {
+  display: block;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #2f5a2c;
+}
+.town canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: none;          /* касание ведёт персонажа, а не прокручивает страницу */
+  cursor: pointer;
+}
+.town canvas:focus { outline: none; }
+.town canvas:focus-visible { outline: var(--px) solid var(--focus); outline-offset: -8px; }
+
+.town-bar {
+  position: absolute; top: 12px; left: 12px; right: 12px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  pointer-events: none;        /* клики мимо плашек проходят на карту */
+}
+.town-bar > * { pointer-events: auto; }
+
+.town-name, .town-help, .town-fallback {
+  margin: 0;
+  background: var(--panel); color: var(--ink);
+  border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow);
+}
+.town-name { padding: 6px 12px; line-height: 1.25; }
+.town-name strong { display: block; font-family: var(--font-pixel); font-weight: 400; font-size: 1.5rem; }
+.town-name span { font-size: 0.9rem; color: var(--muted); }
+
+.town-cv { font-size: 1.3rem; text-align: center; }
+@media (min-width: 900px) { .town-cv { white-space: nowrap; } }
+
+.town-help {
+  position: absolute; left: 12px; bottom: 12px;
+  padding: 4px 10px; font-size: 0.9rem; pointer-events: none;
+}
+
+/* Если модуль городка не загрузился (старый браузер, ошибка сети), гость не остаётся
+   перед пустым экраном: видна ссылка на обычный режим. */
+.town-first:not(.town-ready) .town-fallback {
+  display: block; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 16px 20px; text-align: center;
+}
+.town-first:not(.town-ready) .town-help { display: none; }
+
+@media (max-width: 640px) {
+  .town-bar { flex-direction: column; }
+  .town-name span { display: none; }
+  .town-cv { font-size: 1.1rem; }
+}
+
+@media print {
+  .town, .to-town { display: none !important; }
+  .town-first #cv { display: block; }
+  html.town-first, html.town-first body { overflow: visible; height: auto; }
+}
