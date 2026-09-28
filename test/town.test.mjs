@@ -8,7 +8,7 @@ import {
 import { move, hitsWall, velocity, facing, tileFeet, SPEED } from '../js/town/physics.mjs';
 import { findPath, nearestFree } from '../js/town/path.mjs';
 import { pixelScale, cameraTarget, follow } from '../js/town/camera.mjs';
-import { chooseMode, TOWN_MIN_WIDTH } from '../js/town/mode.mjs';
+import { chooseMode } from '../js/town/mode.mjs';
 import { HERO, HERO_PALETTE, TREE, TREE_PALETTE, EMBLEMS, EMBLEM_PALETTE, mirror, walkFrame } from '../js/town/sprites.mjs';
 import { BUILDINGS as PROJECT_BUILDINGS } from '../js/render.mjs';
 
@@ -184,36 +184,37 @@ test('камера догоняет мягко и одинаково при лю
   assert.deepEqual(follow({ x: 0, y: 0 }, target, 1 / 60, { reducedMotion: true }), target);
 });
 
-test('выбор режима', () => {
-  assert.equal(chooseMode('', 1280), 'town');
-  assert.equal(chooseMode('', 390), 'cv');
-  assert.equal(chooseMode('#cv', 1280), 'cv');
-  assert.equal(chooseMode('#projects', 1280), 'cv');
-  assert.equal(chooseMode('#town', 390), 'town');
-  assert.equal(chooseMode('', TOWN_MIN_WIDTH), 'town');
-  assert.equal(chooseMode('', TOWN_MIN_WIDTH - 1), 'cv');
+test('выбор режима: городок только по /#town, на любом экране', () => {
+  assert.equal(chooseMode(''), 'cv');
+  assert.equal(chooseMode('#'), 'cv');
+  assert.equal(chooseMode('#cv'), 'cv');
+  assert.equal(chooseMode('#projects'), 'cv');
+  assert.equal(chooseMode('#town'), 'town');
 });
 
 test('встроенный скрипт в index.html решает так же, как chooseMode', async () => {
   const html = await readFile(new URL('index.html', root), 'utf8');
   const code = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-  for (const hash of ['', '#cv', '#town', '#projects', '#contacts']) {
-    for (const width of [390, TOWN_MIN_WIDTH - 1, TOWN_MIN_WIDTH, 1280]) {
+  for (const hash of ['', '#', '#cv', '#town', '#projects', '#contacts']) {
+    for (const width of [390, 1280]) {
       const el = { className: '' };
       vm.runInNewContext(code, { location: { hash }, window: { innerWidth: width }, document: { documentElement: el } });
+      assert.ok(el.className.split(' ').includes('js'));
       const town = el.className.split(' ').includes('town-first');
-      assert.equal(town ? 'town' : 'cv', chooseMode(hash, width), `${hash} ${width}`);
+      assert.equal(town ? 'town' : 'cv', chooseMode(hash), `${hash} ${width}`);
     }
   }
 });
 
-test('на странице есть городок, кнопка в обычный режим и обратно', async () => {
+test('на странице есть городок, кнопка на главную и обратно', async () => {
   const html = await readFile(new URL('index.html', root), 'utf8');
   const profile = JSON.parse(await readFile(new URL('data/profile.json', root), 'utf8'));
   assert.match(html, /<section id="town"/);
   assert.match(html, /<canvas id="town-canvas"[^>]*aria-label="[^"]+"/);
-  assert.match(html, /href="#cv"[^>]*>Нет времени гулять\? Всё обо мне за 30 секунд</);
-  assert.match(html, /href="#town"/);
+  assert.match(html, /href="#cv"[^>]*>Вернуться на главную</);
+  // кнопка в городок стоит внизу главной, после контактов, а не на первом экране
+  const toTown = html.search(/href="#town"[^>]*>Погулять по пиксельному городку</);
+  assert.ok(toTown > html.indexOf('id="contacts"'), 'кнопка в городок должна быть внизу');
   assert.match(html, /<script type="module" src="js\/town\/main.mjs">/);
   // плашка в городке не отстала от данных
   assert.ok(html.includes(`<strong>${profile.name}</strong><span>${profile.role}</span>`));
