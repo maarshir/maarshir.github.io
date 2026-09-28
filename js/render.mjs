@@ -3,6 +3,7 @@
 // видна сразу, без JavaScript, и её читают поисковики и превью ссылок.
 
 import { AVATAR, AVATAR_PALETTE, spriteToSvg } from './avatar.mjs';
+import { PRESETS } from './ask.mjs';
 
 export const BUILDINGS = ['Арена', 'Библиотека', 'Счётная контора', 'Мастерская', 'Сад желаний'];
 
@@ -112,6 +113,31 @@ function renderTimeline(items) {
 
 const contactOf = (profile, kind) => profile.contacts.find((c) => c.kind === kind);
 
+// Окно «Спросите моё резюме». Разметка статичная, оживляет её js/chat.mjs.
+// Без JavaScript окно скрыто стилями, а на его месте остаётся аватар.
+function renderAsk() {
+  const face = spriteToSvg(AVATAR, AVATAR_PALETTE, { className: 'ask-avatar' });
+  const chips = PRESETS
+    .map((p) => `<button type="button" class="ask-chip" data-q="${escapeHtml(p.label)}">${escapeHtml(p.label)}</button>`)
+    .join('\n');
+  return `<section class="ask" id="ask" aria-labelledby="ask-title">
+<div class="ask-head">${face}<h2 id="ask-title">Спросите моё резюме</h2></div>
+<div class="ask-log" id="ask-log">
+<p class="ask-msg ask-bot">Отвечу на вопрос по этой странице. Выберите готовый вопрос или напишите свой.</p>
+</div>
+<div class="ask-chips" role="group" aria-label="Готовые вопросы">
+${chips}
+</div>
+<form class="ask-form" id="ask-form" action="#ask">
+<label class="sr-only" for="ask-input">Ваш вопрос</label>
+<input id="ask-input" name="q" type="text" maxlength="200" autocomplete="off" placeholder="Например: какой стек у doc-answers?">
+<button type="submit" class="btn">Спросить</button>
+</form>
+<p class="ask-note">Отвечает не нейросеть, а поиск по тексту этой страницы прямо в браузере, по тому же принципу, что в ${link('https://github.com/maarshir/doc-answers', 'doc-answers')}.</p>
+<p class="sr-only" id="ask-live" aria-live="polite"></p>
+</section>`;
+}
+
 export function renderCv(profile, projects) {
   const errors = validateData(profile, projects);
   if (errors.length) throw new Error(`Ошибки в данных:\n${errors.join('\n')}`);
@@ -143,6 +169,7 @@ ${link(github.url, 'Гитхаб', 'btn')}
 </div>
 <div class="hero-side">
 ${avatar}
+${renderAsk()}
 </div>
 </header>
 
