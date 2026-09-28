@@ -47,3 +47,13 @@ test('ссылка «Попробовать» только https', async () => {
   projects[0].demo = 'javascript:alert(1)';
   assert.match(validateData(profile, projects).join('\n'), /demo/);
 });
+
+test('на главной сначала инструменты для других, строки карточек одной фразой', async () => {
+  const projects = await load('projects.json');
+  const main = projects.filter((p) => p.group === 'main').map((p) => p.id);
+  assert.deepEqual(main, ['promptdiff', 'doc-answers']);
+  for (const p of projects) {
+    assert.match(p.line, /^[А-ЯЁA-Z].*\.$/, `${p.id}: строка с заглавной буквы и с точкой в конце`);
+    assert.ok(!p.line.slice(0, -1).includes('. '), `${p.id}: строка должна быть одной фразой`);
+  }
+});
