@@ -52,7 +52,8 @@ test('обычные вопросы находят нужный раздел п�
     'что такое promptdiff': 'promptdiff',
     'какой стек у doc-answers': 'doc-answers',
     'BM25': 'doc-answers',
-    'Wishly': 'wishly',
+    'проверка курсовой по ГОСТу': 'gost-skills',
+    'личный ассистент': 'assistant',
     'сколько стоит запрос к модели': 'token-counter',
   };
   for (const [q, id] of Object.entries(cases)) assert.equal(ids(q)[0], id, q);
@@ -67,11 +68,11 @@ test('проект, названный по имени, отвечает оди�
   assert.ok(a.links.some((l) => l.url === '#project-doc-answers'));
 });
 
-test('вопрос про проекты с ИИ: только проекты, основные раньше личных, без Wishly', () => {
+test('вопрос про проекты с ИИ: только проекты, основные раньше личных', () => {
   const got = ids('Покажи проекты с ИИ');
   const group = (id) => projects.find((p) => p.id === id).group;
   assert.ok(got.every((id) => projects.some((p) => p.id === id)), got.join(', '));
-  assert.ok(!got.includes('wishly'));
+  assert.ok(got.includes('promptdiff') && got.includes('doc-answers'), got.join(', '));
   const firstPersonal = got.findIndex((id) => group(id) === 'personal');
   if (firstPersonal !== -1) assert.ok(got.slice(firstPersonal).every((id) => group(id) === 'personal'));
 });
@@ -127,4 +128,11 @@ test('окно чата на странице: кнопки из PRESETS, пол
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /не нейросеть, а поиск по тексту этой страницы/);
   assert.match(html, /github\.com\/maarshir\/doc-answers/);
+});
+
+test('у проекта с закрытым кодом в ответе нет ссылки «Код»', () => {
+  const a = ask('расскажи про ассистента');
+  assert.deepEqual(a.sources, ['Ассистент']);
+  assert.ok(a.links.some((l) => l.url === '#project-assistant'));
+  assert.ok(!a.links.some((l) => l.label === 'Код'));
 });

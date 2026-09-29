@@ -44,9 +44,10 @@ export function hintText(b) {
 // Данные те же, что у главной страницы: data/profile.json и data/projects.json.
 export function dialogFor(b, profile, projects) {
   if (b.kind === 'project') {
-    const p = (projects || []).find((item) => item.building === b.name);
-    if (!p) return missing(b);
-    const links = [{ label: 'Код на Гитхабе', url: p.code, external: true }];
+    if (!projects) return missing(b);
+    const p = projects.find((item) => item.building === b.name);
+    if (!p) return empty(b);
+    const links = p.code ? [{ label: 'Код на Гитхабе', url: p.code, external: true }] : [];
     if (p.demo) links.push({ label: 'Попробовать', url: p.demo, external: true });
     return {
       title: p.title,
@@ -104,6 +105,18 @@ export function dialogFor(b, profile, projects) {
     };
   }
   return missing(b);
+}
+
+// Здание, за которым сейчас нет проекта: данные загрузились, просто здесь пусто.
+function empty(b) {
+  return {
+    title: b.name,
+    place: b.name,
+    paragraphs: ['Здесь пока пусто. Все проекты есть на главной странице.'],
+    points: [],
+    tags: [],
+    links: [{ label: 'К проектам', url: '#projects', external: false }],
+  };
 }
 
 function missing(b) {

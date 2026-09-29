@@ -68,12 +68,14 @@ export function validateData(profile, projects) {
     need(GROUPS.includes(p.group), `${where}: group должен быть одним из: ${GROUPS.join(', ')}`);
     need(text(p.line) && p.line.length <= LINE_MAX, `${where}: нужна строка line не длиннее ${LINE_MAX} символов`);
     need(text(p.summary), `${where}: нужен summary`);
-    need(BUILDINGS.includes(p.building), `${where}: building должен быть одним из: ${BUILDINGS.join(', ')}`);
-    need(!buildings.has(p.building), `${where}: здание ${p.building} уже занято`);
-    buildings.add(p.building);
+    // building: null значит проекта нет в городке.
+    need(p.building === null || BUILDINGS.includes(p.building), `${where}: building должен быть null или одним из: ${BUILDINGS.join(', ')}`);
+    need(p.building === null || !buildings.has(p.building), `${where}: здание ${p.building} уже занято`);
+    if (p.building !== null) buildings.add(p.building);
     need(Array.isArray(p.points) && p.points.length > 0 && p.points.every(text), `${where}: нужен список points`);
     need(Array.isArray(p.stack) && p.stack.length > 0 && p.stack.every(text), `${where}: нужен список stack`);
-    need(text(p.code) && p.code.startsWith('https://github.com/maarshir/'), `${where}: code должен вести в репозиторий maarshir`);
+    // code: null у проекта с закрытым кодом, тогда на карточке нет кнопки «Код».
+    need(p.code === null || (text(p.code) && p.code.startsWith('https://github.com/maarshir/')), `${where}: code это null или ссылка на репозиторий maarshir`);
     need(p.demo === null || (text(p.demo) && p.demo.startsWith('https://')), `${where}: demo это null или https-ссылка`);
   }
   return errors;
@@ -93,16 +95,16 @@ const tagList = (items) => `<ul class="tags" aria-label="Технологии">$
 // чтобы список проектов читался с одного взгляда, но остались без JavaScript.
 function renderProject(p) {
   const points = p.points.map((pt) => `<li>${escapeHtml(pt)}</li>`).join('');
-  const demo = p.demo ? link(p.demo, 'Попробовать', 'btn') : '';
+  const buttons = (p.code ? link(p.code, 'Код', 'btn') : '') + (p.demo ? link(p.demo, 'Попробовать', 'btn') : '');
   return [
     `<article class="card" id="project-${escapeHtml(p.id)}">`,
     `<h3>${escapeHtml(p.title)}</h3>`,
     `<p class="card-line">${escapeHtml(p.line)}</p>`,
     tagList(p.stack.slice(0, CARD_TAGS)),
     `<details class="more"><summary>Подробнее</summary><p>${escapeHtml(p.summary)}</p><ul class="points">${points}</ul></details>`,
-    `<p class="card-links">${link(p.code, 'Код', 'btn')}${demo}</p>`,
+    buttons ? `<p class="card-links">${buttons}</p>` : '',
     '</article>',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 function renderTimeline(items) {
@@ -182,7 +184,7 @@ ${cards('main')}
 ${personal ? `
 <section id="personal" aria-labelledby="personal-title">
 <h2 id="personal-title" class="section-title section-title-quiet">Личные проекты</h2>
-<p class="section-note">Небольшие вещи, которые я сделал для себя.</p>
+<p class="section-note">Небольшие вещи для себя.</p>
 <div class="cards">
 ${personal}
 </div>

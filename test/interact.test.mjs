@@ -58,7 +58,7 @@ test('подсказка стоит над дверью и говорит, чт�
 });
 
 test('окно проекта собрано из data/projects.json', () => {
-  for (const p of projects) {
+  for (const p of projects.filter((x) => x.building)) {
     const b = BUILDINGS.find((item) => item.name === p.building);
     const d = dialogFor(b, profile, projects);
     assert.equal(d.title, p.title);
@@ -72,9 +72,24 @@ test('окно проекта собрано из data/projects.json', () => {
   }
 });
 
+test('здание без проекта: «пусто» и путь к проектам, а не «данные не загрузились»', () => {
+  const garden = byId('garden');
+  assert.ok(!projects.some((p) => p.building === garden.name), 'тест рассчитан на пустой Сад желаний');
+  const d = dialogFor(garden, profile, projects);
+  assert.ok(!d.missing);
+  assert.match(d.paragraphs[0], /пусто/);
+  assert.deepEqual(d.links, [{ label: 'К проектам', url: '#projects', external: false }]);
+});
+
+test('у проекта с закрытым кодом в окне нет ссылки на Гитхаб', () => {
+  const closed = projects.map((p) => (p.id === 'gost-skills' ? { ...p, code: null } : p));
+  const b = BUILDINGS.find((item) => item.name === 'Мастерская');
+  assert.deepEqual(dialogFor(b, profile, closed).links, []);
+});
+
 test('кнопка «Попробовать» только если есть demo', () => {
-  const withDemo = projects.map((p) => (p.id === 'wishly' ? { ...p, demo: 'https://example.org/app' } : p));
-  const d = dialogFor(byId('garden'), profile, withDemo);
+  const withDemo = projects.map((p) => (p.id === 'token-counter' ? { ...p, demo: 'https://example.org/app' } : p));
+  const d = dialogFor(byId('counting'), profile, withDemo);
   assert.deepEqual(d.links.map((l) => l.label), ['Код на Гитхабе', 'Попробовать']);
   assert.equal(d.links[1].url, 'https://example.org/app');
 });

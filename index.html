@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Иван Капустин, разработчик</title>
-<meta name="description" content="Иван Капустин: веб-приложения, боты и автоматизация, расту в сторону ИИ-инженерии. Проекты promptdiff и doc-answers, резюме и контакты.">
+<meta name="description" content="Иван Капустин: веб-приложения, боты и автоматизация, расту в сторону ИИ-инженерии. Проекты promptdiff, doc-answers и gost-skills, резюме и контакты.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="fonts/tiny5.css">
@@ -80,38 +80,37 @@ document.documentElement.className = 'js' + (location.hash === '#town' ? ' town-
 <div class="cards">
 <article class="card" id="project-promptdiff">
 <h3>promptdiff</h3>
-<p class="card-line">Сравнивает варианты промпта на наборе задач и показывает, где они разошлись.</p>
+<p class="card-line">Сравнивает варианты промпта на наборе задач.</p>
 <ul class="tags" aria-label="Технологии"><li>Python</li><li>asyncio</li><li>httpx</li></ul>
 <details class="more"><summary>Подробнее</summary><p>Прогоняет несколько вариантов промпта по одним и тем же задачам и показывает, где ответы разошлись: на каких задачах один вариант прошёл проверки, а другой нет.</p><ul class="points"><li>Чёткие проверки ответов вместо оценки на глаз</li><li>Асинхронные запросы с повторами, ограничением частоты и паузой по retry-after</li><li>Кэш ответов на диске и цена каждого варианта через token-counter</li><li>Два поставщика: Anthropic и Groq с бесплатным уровнем</li></ul></details>
 <p class="card-links"><a class="btn" href="https://github.com/maarshir/promptdiff-" target="_blank" rel="noopener">Код</a></p>
 </article>
 <article class="card" id="project-doc-answers">
 <h3>doc-answers</h3>
-<p class="card-line">Ответы по вашим документам со ссылкой на источник и честным отказом, если ответа нет.</p>
+<p class="card-line">Ответы по вашим документам со ссылкой на источник.</p>
 <ul class="tags" aria-label="Технологии"><li>Python</li><li>RAG</li><li>BM25</li></ul>
 <details class="more"><summary>Подробнее</summary><p>Отвечает на вопросы по папке со своими документами строго по найденным кускам, со ссылкой на источник, а если ответа нет, так и говорит.</p><ul class="points"><li>Поиск BM25 по основам слов, без векторной базы</li><li>Ссылки модели на источники проверяются кодом после ответа</li><li>Набор вопросов отдельно проверяет поиск и ответы модели</li><li>Демонстрационный режим без ключа</li></ul></details>
 <p class="card-links"><a class="btn" href="https://github.com/maarshir/doc-answers" target="_blank" rel="noopener">Код</a></p>
+</article>
+<article class="card" id="project-gost-skills">
+<h3>gost-skills</h3>
+<p class="card-line">Проверяет оформление курсовых и отчётов в .docx по ГОСТу и показывает, где ошибка.</p>
+<ul class="tags" aria-label="Технологии"><li>Python</li><li>python-docx</li><li>Agent Skills</li></ul>
+<details class="more"><summary>Подробнее</summary><p>Навыки для ИИ-агентов со стандартом Agent Skills: Claude Code, Codex, Cursor и других. Скрипт читает готовый файл .docx и называет каждое нарушение ГОСТ 7.32 с номером абзаца и пунктом стандарта.</p><ul class="points"><li>Поля, шрифт, интервалы, заголовки, подписи рисунков и таблиц, ссылки на источники</li><li>Свойства текста ищутся по цепочке стилей, как их видит Word</li><li>Настройки под методичку в TOML поверх профиля ГОСТ</li><li>Тесты на файлах, собранных кодом, и проверка SKILL.md по спецификации</li></ul></details>
+<p class="card-links"><a class="btn" href="https://github.com/maarshir/gost-skills" target="_blank" rel="noopener">Код</a></p>
 </article>
 </div>
 </section>
 
 <section id="personal" aria-labelledby="personal-title">
 <h2 id="personal-title" class="section-title section-title-quiet">Личные проекты</h2>
-<p class="section-note">Небольшие вещи, которые я сделал для себя.</p>
+<p class="section-note">Небольшие вещи для себя.</p>
 <div class="cards">
 <article class="card" id="project-assistant">
-<h3>Личный ассистент</h3>
+<h3>Ассистент</h3>
 <p class="card-line">Сайт и бот в Телеграме для записей дня, свободные фразы и голосовые разбирает модель.</p>
 <ul class="tags" aria-label="Технологии"><li>Python</li><li>FastAPI</li><li>PostgreSQL</li></ul>
 <details class="more"><summary>Подробнее</summary><p>Сайт и бот в Телеграме для режима дня: модель разбирает свободные фразы в действия с записями дня через JSON.</p><ul class="points"><li>Защита от ошибок модели при разборе JSON</li><li>Доступ только для владельца, проверка секрета вебхука</li><li>Вечерние вопросы и напоминания от бота</li></ul></details>
-<p class="card-links"><a class="btn" href="https://github.com/maarshir/assistant" target="_blank" rel="noopener">Код</a></p>
-</article>
-<article class="card" id="project-wishly">
-<h3>Wishly</h3>
-<p class="card-line">Общий список желаний на двоих в Телеграме.</p>
-<ul class="tags" aria-label="Технологии"><li>JavaScript</li><li>Supabase</li><li>Tailwind</li></ul>
-<details class="more"><summary>Подробнее</summary><p>Мини-приложение в Телеграме, где двое ведут общий список желаний: подарки, места и рестораны с фото, ценами и уровнем «хочу».</p><ul class="points"><li>Изменения второго человека появляются сразу</li><li>Экранирование пользовательских данных и тесты на Node</li></ul></details>
-<p class="card-links"><a class="btn" href="https://github.com/maarshir/Wishly" target="_blank" rel="noopener">Код</a></p>
 </article>
 <article class="card" id="project-token-counter">
 <h3>token-counter</h3>
@@ -166,7 +165,7 @@ document.documentElement.className = 'js' + (location.hash === '#town' ? ' town-
 </section>
 <!-- cv:end -->
 <section class="to-town" aria-label="Пасхалка">
-<p>Все проекты выше можно найти и по-другому: они стоят домами в маленьком пиксельном городке, по которому ходит персонаж.</p>
+<p>Проекты выше можно найти и по-другому: они стоят домами в маленьком пиксельном городке, по которому ходит персонаж.</p>
 <a class="btn" href="#town">Погулять по пиксельному городку</a>
 </section>
 </main>
