@@ -4,6 +4,7 @@
 
 import { AVATAR, AVATAR_PALETTE, spriteToSvg } from './avatar.mjs';
 import { PRESETS } from './ask.mjs';
+import { renderScene } from './scene.mjs';
 
 export const BUILDINGS = ['Арена', 'Библиотека', 'Счётная контора', 'Мастерская', 'Сад желаний'];
 
@@ -168,6 +169,7 @@ export function renderCv(profile, projects) {
 ${link(telegram.url, 'Написать в Телеграм', 'btn')}
 ${link(github.url, 'Гитхаб', 'btn')}
 </nav>
+${renderScene()}
 </div>
 <div class="hero-side">
 ${avatar}
