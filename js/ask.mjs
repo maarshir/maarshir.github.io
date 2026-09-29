@@ -147,7 +147,7 @@ export function buildDocs(profile, projects) {
       full: [`${p.title}: ${p.summary}`, ...p.points.map((pt) => `▸ ${pt}`), `Стек: ${p.stack.join(', ')}.`],
       links: [
         { label: `${p.title} на странице`, url: `#project-${p.id}` },
-        { label: 'Код', url: p.code },
+        ...(p.code ? [{ label: 'Код', url: p.code }] : []),
         ...(p.demo ? [{ label: 'Попробовать', url: p.demo }] : []),
       ],
     });
