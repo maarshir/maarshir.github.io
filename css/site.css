@@ -223,3 +223,107 @@ html:not(.js) .ask { display: none; }
 @media (prefers-color-scheme: dark) {
   .btn-main, .btn-main:hover, .section-title { color: #2b2139; }
 }
+
+/* Пиксельная сцена первого экрана: время суток ставит js/live.mjs атрибутом data-phase,
+   без JavaScript всегда день. Цвета неба и тень ночи здесь, рисунок в js/scene.mjs. */
+.scene {
+  display: block; width: 100%; max-width: 480px; height: auto; margin: 24px 0 0;
+  border: var(--px) solid var(--ink); box-shadow: var(--px) var(--px) 0 var(--shadow);
+  background: #e9dcc0;
+}
+.scene .shade { opacity: 0; transition: opacity 1.2s steps(6); }
+.scene .sky { fill: #6fa8dc; }
+.scene .moon, .scene .stars, .scene .lamp-light, .scene .bulb { display: none; }
+.scene .sun, .scene .arms, .scene .line { transform-box: fill-box; }
+.scene[data-phase="morning"] .sky { fill: #f3c7a2; }
+.scene[data-phase="morning"] .sun { transform: translate(-9px, 3px); }
+.scene[data-phase="morning"] .shade { opacity: 0.08; }
+.scene[data-phase="evening"] .sky { fill: #d9785a; }
+.scene[data-phase="evening"] .sun { transform: translate(0, 7px); }
+.scene[data-phase="evening"] .cloud { display: none; }
+.scene[data-phase="evening"] .shade { opacity: 0.2; }
+.scene[data-phase="evening"] .bulb { display: inline; }
+.scene[data-phase="night"] .sky { fill: #1d2745; }
+.scene[data-phase="night"] .sun, .scene[data-phase="night"] .cloud, .scene[data-phase="night"] .steam { display: none; }
+.scene[data-phase="night"] .moon, .scene[data-phase="night"] .stars, .scene[data-phase="night"] .bulb { display: inline; }
+.scene[data-phase="night"] .lamp-light { display: inline; opacity: 0.3; }
+.scene[data-phase="night"] .shade { opacity: 0.5; }
+.scene[data-phase="evening"] .lamp-light { display: inline; opacity: 0.15; }
+
+/* Печатает: руки меняют кадр, строки кода появляются по очереди, курсор мигает. */
+.scene .arms-1 { visibility: hidden; }
+.scene .arms-0 { animation: scene-type 0.5s steps(1) infinite; }
+.scene .arms-1 { animation: scene-type 0.5s steps(1) infinite reverse; }
+@keyframes scene-type { 0% { visibility: visible; } 50% { visibility: hidden; } }
+.scene .line { transform-origin: left; animation: scene-code 8s steps(1) infinite; }
+.scene .line-2 { animation-delay: 0.1s; }
+.scene .line-3 { animation-delay: 0.2s; }
+.scene .line-4 { animation-delay: 0.3s; }
+@keyframes scene-code {
+  0% { transform: scaleX(0); }
+  10% { transform: scaleX(0.34); }
+  20% { transform: scaleX(0.67); }
+  30%, 100% { transform: scaleX(1); }
+}
+.scene .line-2 { animation-name: scene-code-2; }
+.scene .line-3 { animation-name: scene-code-3; }
+.scene .line-4 { animation-name: scene-code-4; }
+@keyframes scene-code-2 { 0%, 30% { transform: scaleX(0); } 40% { transform: scaleX(0.5); } 50%, 100% { transform: scaleX(1); } }
+@keyframes scene-code-3 { 0%, 50% { transform: scaleX(0); } 60% { transform: scaleX(0.5); } 70%, 100% { transform: scaleX(1); } }
+@keyframes scene-code-4 { 0%, 70% { transform: scaleX(0); } 80% { transform: scaleX(0.5); } 90%, 100% { transform: scaleX(1); } }
+.scene .cursor { animation: scene-blink 1s steps(1) infinite; }
+@keyframes scene-blink { 50% { opacity: 0; } }
+.scene .steam { animation: scene-steam 2s steps(2) infinite; }
+@keyframes scene-steam { 50% { transform: translateY(-1px); opacity: 0.5; } }
+.scene .stars { animation: scene-blink 3s steps(1) infinite; }
+
+/* Карточки-картриджи: цветная наклейка сверху и рифлёная полоска, за которую «вынимают».
+   Цвет наклейки идёт по кругу, чтобы соседние карточки различались. */
+.cards .card { position: relative; border-top-width: 14px; padding-top: 26px; }
+.cards .card::before {
+  content: ''; position: absolute; left: 16px; right: 16px; top: 8px; height: 6px;
+  background: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 10px);
+  opacity: 0.5;
+}
+.cards .card:nth-child(4n+1) { border-top-color: var(--roof); }
+.cards .card:nth-child(4n+2) { border-top-color: var(--sky); }
+.cards .card:nth-child(4n+3) { border-top-color: var(--grass); }
+.cards .card:nth-child(4n+4) { border-top-color: var(--gold); }
+.cards .card { transition: transform 120ms steps(2), box-shadow 120ms steps(2); }
+.cards .card:hover, .cards .card:focus-within {
+  transform: translate(-3px, -3px);
+  box-shadow: calc(var(--px) + 3px) calc(var(--px) + 3px) 0 var(--shadow);
+}
+/* Появление при прокрутке включает js/live.mjs, только если движение не уменьшено.
+   Без JavaScript класса reveal нет, и карточки видны сразу. */
+.reveal .cards .card:not(.in) { opacity: 0; transform: translateY(16px); }
+.reveal .cards .card.in { transition: opacity 360ms steps(4), transform 360ms steps(4), box-shadow 120ms steps(2); }
+
+/* Персонаж идёт вдоль правого края, пока гость прокручивает страницу.
+   Только на широком экране, где справа есть свободное поле, и только с JavaScript. */
+.walker {
+  position: fixed; top: 0; z-index: 5; width: 48px; height: 48px; pointer-events: none;
+  right: max(12px, calc((100vw - 980px) / 4 - 24px)); display: none;
+}
+.walker svg { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.walker::after {
+  content: ''; position: absolute; left: 10px; right: 10px; bottom: -4px; height: 4px;
+  background: var(--shadow); opacity: 0.25;
+}
+@media (min-width: 1120px) {
+  .js .walker { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .walker { display: none !important; }
+}
+.town-first .walker { display: none !important; }
+
+@media (max-width: 640px) {
+  .scene { margin-top: 16px; }
+}
+@media print {
+  .scene, .walker { display: none; }
+  .reveal .cards .card:not(.in) { opacity: 1; transform: none; }
+  .cards .card { border-top-width: 2px; }
+  .cards .card::before { display: none; }
+}
