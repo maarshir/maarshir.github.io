@@ -10,9 +10,34 @@ test('данные сайта проходят проверку', async () => {
   assert.deepEqual(errors, []);
 });
 
-test('у каждого здания городка есть проект', async () => {
+// Код открыт только у этих репозиториев. Ссылка на закрытый вела бы гостя на 404,
+// поэтому у проекта с закрытым кодом code: null и на карточке нет кнопки «Код».
+const OPEN_REPOS = ['promptdiff-', 'doc-answers', 'token-counter', 'gost-skills'];
+
+test('ссылки «Код» ведут только в открытые репозитории', async () => {
+  for (const p of await load('projects.json')) {
+    if (p.code === null) continue;
+    const repo = p.code.replace('https://github.com/maarshir/', '');
+    assert.ok(OPEN_REPOS.includes(repo), `${p.id}: ${p.code} не в списке открытых`);
+  }
+});
+
+test('проекты и порядок как на странице профиля, закрытый ассистент без кода и без здания', async () => {
   const projects = await load('projects.json');
-  assert.deepEqual(projects.map((p) => p.building).sort(), [...BUILDINGS].sort());
+  const by = (g) => projects.filter((p) => p.group === g).map((p) => p.id);
+  assert.deepEqual(by('main'), ['promptdiff', 'doc-answers', 'gost-skills']);
+  assert.deepEqual(by('personal'), ['assistant', 'token-counter']);
+  const assistant = projects.find((p) => p.id === 'assistant');
+  assert.equal(assistant.code, null);
+  assert.equal(assistant.building, null);
+});
+
+test('здания городка заняты не больше чем одним проектом, у основных проектов здание есть', async () => {
+  const projects = await load('projects.json');
+  const used = projects.map((p) => p.building).filter((b) => b !== null);
+  assert.equal(new Set(used).size, used.length);
+  for (const b of used) assert.ok(BUILDINGS.includes(b), b);
+  for (const p of projects.filter((x) => x.group === 'main')) assert.ok(p.building, p.id);
 });
 
 test('в текстах нет длинных тире и слов из рекламных буклетов', async () => {
@@ -31,6 +56,7 @@ test('проверка ловит типичные ошибки в данных'
   broken[1].id = broken[0].id;
   broken[2].building = 'Замок';
   broken[3].code = 'https://example.com/x';
+  broken[0].building = broken[1].building;
   broken[4].stack = [];
   const errors = validateData({ ...profile, name: ' ' }, broken);
   const text = errors.join('\n');
@@ -38,6 +64,7 @@ test('проверка ловит типичные ошибки в данных'
   assert.match(text, /id повторяется/);
   assert.match(text, /building должен быть/);
   assert.match(text, /репозиторий maarshir/);
+  assert.match(text, /уже занято/);
   assert.match(text, /список stack/);
 });
 
@@ -48,10 +75,8 @@ test('ссылка «Попробовать» только https', async () => {
   assert.match(validateData(profile, projects).join('\n'), /demo/);
 });
 
-test('на главной сначала инструменты для других, строки карточек одной фразой', async () => {
+test('строки карточек одной фразой', async () => {
   const projects = await load('projects.json');
-  const main = projects.filter((p) => p.group === 'main').map((p) => p.id);
-  assert.deepEqual(main, ['promptdiff', 'doc-answers']);
   for (const p of projects) {
     assert.match(p.line, /^[А-ЯЁA-Z].*\.$/, `${p.id}: строка с заглавной буквы и с точкой в конце`);
     assert.ok(!p.line.slice(0, -1).includes('. '), `${p.id}: строка должна быть одной фразой`);
