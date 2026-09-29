@@ -1,7 +1,7 @@
 {
   "name": "maarshir.github.io",
   "private": true,
-  "description": "Сайт-резюме Ивана Капустина: обычный режим и пиксельный городок",
+  "description": "Резюме и проекты",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
