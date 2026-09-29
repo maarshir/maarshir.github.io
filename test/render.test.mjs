@@ -67,6 +67,15 @@ test('проекты в двух разделах, основные раньше
   assert.ok(!renderCv(profile, [project]).includes('id="personal"'));
 });
 
+test('у проекта с закрытым кодом нет кнопки «Код», у открытого есть', () => {
+  const card = (p) => { const h = renderCv(profile, [p]); return h.slice(h.indexOf('id="project-demo"'), h.indexOf('</article>')); };
+  assert.match(card(project), />Код</);
+  const closed = card({ ...project, code: null, building: null });
+  assert.ok(!closed.includes('>Код<'));
+  assert.ok(!closed.includes('card-links'), 'пустой строки кнопок быть не должно');
+  assert.match(card({ ...project, code: null, demo: 'https://example.com' }), />Попробовать</);
+});
+
 test('на карточке не больше трёх меток, подробности свёрнуты', () => {
   const html = renderCv(profile, [{ ...project, stack: ['A', 'B', 'C', 'D', 'E'] }]);
   const card = html.slice(html.indexOf('id="project-demo"'), html.indexOf('</article>'));
