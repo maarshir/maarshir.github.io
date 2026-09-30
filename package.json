@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "assets": "node scripts/render-assets.mjs",
     "test": "node --test",
     "start": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
   }
 }
