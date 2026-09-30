@@ -34,7 +34,7 @@ test('якоря на странице ведут на существующие 
 test('внешние ссылки только https и только на ожидаемые адреса', async () => {
   const html = await read('index.html');
   for (const [, url] of html.matchAll(/href="(http[^"]*)"/g)) {
-    assert.match(url, /^https:\/\/(github\.com\/maarshir|t\.me\/kaioann)/, url);
+    assert.match(url, /^https:\/\/(github\.com\/maarshir|t\.me\/kaioann|maarshir\.github\.io\/$)/, url);
   }
 });
 
@@ -43,6 +43,8 @@ test('шрифт встроен в css, внешних подключений н
   assert.match(css, /font-family:'Tiny5'/);
   assert.ok(!/url\((?!data:)/.test(css), 'в шрифте ссылка на внешний файл');
   const html = await read('index.html');
-  assert.ok(!/<(link|script)[^>]+(href|src)="https?:/.test(html), 'подключение с внешнего сервера');
+  // rel="canonical" только называет адрес страницы и ничего не загружает, поэтому его пропускаем.
+  const loads = html.replace(/<link rel="canonical" href="https:\/\/maarshir\.github\.io\/">/, '');
+  assert.ok(!/<(link|script)[^>]+(href|src)="https?:/.test(loads), 'подключение с внешнего сервера');
   await access(new URL('fonts/OFL-Tiny5.txt', root));
 });

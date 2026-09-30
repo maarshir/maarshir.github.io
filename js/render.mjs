@@ -17,6 +17,9 @@ export const LINE_MAX = 110;
 // Сколько меток стека на карточке: больше уже не читается с одного взгляда.
 export const CARD_TAGS = 3;
 
+// Резюме одной страницей, собирается из тех же данных (js/resume.mjs, scripts/render-assets.mjs).
+export const RESUME_PDF = 'resume.pdf';
+
 const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 export function escapeHtml(value) {
@@ -166,6 +169,7 @@ export function renderCv(profile, projects) {
 <p class="looking">${escapeHtml(profile.lookingFor)}</p>
 <nav class="hero-links" aria-label="Главное">
 <a class="btn btn-main" href="#projects">Проекты</a>
+<a class="btn" href="${RESUME_PDF}" type="application/pdf">Резюме PDF</a>
 ${link(telegram.url, 'Написать в Телеграм', 'btn')}
 ${link(github.url, 'Гитхаб', 'btn')}
 </nav>

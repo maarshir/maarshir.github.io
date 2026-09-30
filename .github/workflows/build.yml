@@ -1,0 +1,57 @@
+name: Сборка
+
+# Пересобирает всё, что делается из data/*.json: index.html, значок, resume.html,
+# resume.pdf и картинку превью assets/og.png (через Chromium). Затем прогоняет тесты
+# уже со свежими файлами и, если что-то поменялось, коммитит в ту же ветку.
+# Так данные можно править прямо на Гитхабе, без npm run build у себя.
+# Коммит от github-actions этот же файл повторно не запускает, цикла нет.
+on:
+  push:
+    branches: [main, 'work/**']
+    paths:
+      - data/**
+      - js/**
+      - scripts/**
+      - fonts/**
+      - index.html
+      - package.json
+      - package-lock.json
+      - .github/workflows/build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Зависимости и Chromium
+        run: |
+          npm ci
+          npx playwright-core install --with-deps --only-shell chromium
+      - name: Сборка страницы, резюме и превью
+        run: |
+          npm run build
+          npm run assets
+      - name: Тесты со свежими файлами
+        run: npm test
+      - name: Коммит, если что-то поменялось
+        run: |
+          git add index.html favicon.svg resume.html resume.pdf assets
+          if git diff --cached --quiet; then
+            echo "Собранные файлы не изменились"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Сборка из данных: страница, резюме PDF и превью"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

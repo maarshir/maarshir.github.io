@@ -1,17 +1,35 @@
-// Пересобирает обычный режим в index.html из data/*.json.
-// Запуск: npm run build. Тест test/build.test.mjs проверяет, что index.html не отстал от данных.
-import { readFile, writeFile } from 'node:fs/promises';
+// Пересобирает из data/*.json всё, что можно собрать без браузера:
+// index.html (главная и теги превью в <head>), favicon.svg, resume.html и assets/og-card.html.
+// Запуск: npm run build. PDF и картинку превью из них делает npm run assets (нужен Chromium).
+// Тесты test/build.test.mjs и test/resume.test.mjs проверяют, что файлы не отстали от данных.
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { renderCv, injectCv } from '../js/render.mjs';
+import { renderHead, injectHead, renderResume, renderOgCard } from '../js/resume.mjs';
 import { AVATAR, AVATAR_PALETTE, spriteToSvg } from '../js/avatar.mjs';
 
 const root = new URL('..', import.meta.url);
 
-export async function buildIndex() {
+export async function loadData() {
   const profile = JSON.parse(await readFile(new URL('data/profile.json', root), 'utf8'));
   const projects = JSON.parse(await readFile(new URL('data/projects.json', root), 'utf8'));
+  return { profile, projects };
+}
+
+export async function buildIndex() {
+  const { profile, projects } = await loadData();
   const html = await readFile(new URL('index.html', root), 'utf8');
-  return injectCv(html, renderCv(profile, projects));
+  return injectCv(injectHead(html, renderHead(profile, projects)), renderCv(profile, projects));
+}
+
+export async function buildResume() {
+  const { profile, projects } = await loadData();
+  return renderResume(profile, projects);
+}
+
+export async function buildOgCard() {
+  const { profile } = await loadData();
+  return renderOgCard(profile);
 }
 
 // Значок вкладки из того же спрайта, что и аватар.
@@ -21,8 +39,11 @@ export function buildFavicon() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const next = await buildIndex();
-  await writeFile(new URL('index.html', root), next);
+  await mkdir(new URL('assets/', root), { recursive: true });
+  await writeFile(new URL('index.html', root), await buildIndex());
   await writeFile(new URL('favicon.svg', root), buildFavicon());
-  console.log('index.html и favicon.svg собраны из data/ и js/avatar.mjs');
+  await writeFile(new URL('resume.html', root), await buildResume());
+  await writeFile(new URL('assets/og-card.html', root), await buildOgCard());
+  console.log('Собраны index.html, favicon.svg, resume.html и assets/og-card.html.');
+  console.log('Если менялись данные резюме или превью, дальше npm run assets (PDF и картинка).');
 }
