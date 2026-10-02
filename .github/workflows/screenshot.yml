@@ -1,0 +1,55 @@
+name: Снимок для README
+
+# Снимает первый экран сайта в docs/screen.png, когда меняется сам сайт.
+# Chromium тот же, что для резюме PDF и превью в build.yml.
+on:
+  push:
+    branches: [main]
+    paths:
+      - data/**
+      - js/**
+      - css/**
+      - fonts/**
+      - index.html
+      - scripts/screenshot.mjs
+      - .github/workflows/screenshot.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshot
+  cancel-in-progress: true
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Зависимости и Chromium
+        run: |
+          npm ci
+          npx playwright-core install --with-deps --only-shell chromium
+      - name: Сборка и снимок
+        run: |
+          npm run build
+          npm run screenshot
+      - name: Коммит, если снимок поменялся
+        run: |
+          git add docs/screen.png
+          if git diff --cached --quiet; then
+            echo "Снимок не изменился"
+            exit 0
+          fi
+          git config user.name "$(git log -1 --format=%an)"
+          git config user.email "$(git log -1 --format=%ae)"
+          git stash
+          git pull --rebase origin main
+          git stash pop
+          git add docs/screen.png
+          git commit -m "Снимок первого экрана для README"
+          git push origin HEAD:main
