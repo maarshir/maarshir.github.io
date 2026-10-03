@@ -13,6 +13,9 @@ on:
       - js/**
       - scripts/**
       - fonts/**
+      - assets/photo.jpg
+      - assets/golos-text.woff2
+      - assets/qr-site.svg
       - index.html
       - package.json
       - package-lock.json
