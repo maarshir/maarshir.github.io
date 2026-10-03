@@ -1,11 +1,11 @@
-// Пересобирает из data/*.json всё, что можно собрать без браузера:
+// Пересобирает из data/*.json всё, что можно собрать без браузера (для резюме ещё фото и QR-код из assets/):
 // index.html (главная и теги превью в <head>), favicon.svg, resume.html и assets/og-card.html.
 // Запуск: npm run build. PDF и картинку превью из них делает npm run assets (нужен Chromium).
 // Тесты test/build.test.mjs и test/resume.test.mjs проверяют, что файлы не отстали от данных.
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { renderCv, injectCv } from '../js/render.mjs';
-import { renderHead, injectHead, renderResume, renderOgCard } from '../js/resume.mjs';
+import { renderHead, injectHead, renderResume, renderOgCard, RESUME_PHOTO, RESUME_FONT } from '../js/resume.mjs';
 import { AVATAR, AVATAR_PALETTE, spriteToSvg } from '../js/avatar.mjs';
 
 const root = new URL('..', import.meta.url);
@@ -22,9 +22,20 @@ export async function buildIndex() {
   return injectCv(injectHead(html, renderHead(profile, projects)), renderCv(profile, projects));
 }
 
+// Тексты резюме и QR-код на сайт. Фото и шрифт подключаются файлами, здесь только проверка, что они на месте.
+export async function loadResume() {
+  const resume = JSON.parse(await readFile(new URL('data/resume.json', root), 'utf8'));
+  for (const file of [RESUME_PHOTO, RESUME_FONT]) {
+    await access(new URL(file, root)).catch(() => { throw new Error(`Нет ${file}: резюме без него не собрать`); });
+  }
+  const qr = (await readFile(new URL('assets/qr-site.svg', root), 'utf8')).trim();
+  return { resume, assets: { photo: RESUME_PHOTO, qr } };
+}
+
 export async function buildResume() {
   const { profile, projects } = await loadData();
-  return renderResume(profile, projects);
+  const { resume, assets } = await loadResume();
+  return renderResume(profile, projects, resume, assets);
 }
 
 export async function buildOgCard() {

@@ -1,6 +1,6 @@
 // Резюме на одну страницу A4, картинка для превью ссылок и теги превью в <head>.
-// Всё собирается из тех же data/profile.json и data/projects.json, что и главная,
-// поэтому резюме, сайт и превью в мессенджере не расходятся.
+// Превью и теги собираются из тех же data/profile.json и data/projects.json, что и главная.
+// Резюме берёт оттуда имя и контакты, а свои тексты из data/resume.json.
 // Модуль без DOM и без браузера: HTML отсюда в PDF и PNG переводит scripts/render-assets.mjs.
 
 import { AVATAR, AVATAR_PALETTE, spriteToSvg } from './avatar.mjs';
@@ -12,9 +12,9 @@ export const OG_IMAGE = 'assets/og.png';
 export const OG_W = 1200;
 export const OG_H = 630;
 
-// В резюме не попадает ничего, кроме того, что уже открыто на сайте.
+// Из profile.json в резюме идут только имя и контакты, остальное берётся из data/resume.json.
 // Поле now («Сейчас: …») быстро устаревает, в PDF его нет.
-const RESUME_FIELDS = ['name', 'role', 'direction', 'lookingFor', 'about', 'contacts', 'education', 'work', 'stack'];
+const RESUME_FIELDS = ['name', 'contacts'];
 
 // Адрес без https:// и косой черты в конце: так он читается на бумаге.
 export function shortUrl(url) {
@@ -63,62 +63,121 @@ export function renderHead(profile, projects) {
   ].join('\n');
 }
 
-// Стили резюме: обычный шрифт, тёмный текст, поля 10 и 12 мм. Пиксельный стиль сайта
-// на бумаге и в системах отбора резюме только мешает.
+// Резюме на одну страницу A4 в стиле сайта: пиксельный шрифт только в имени и заголовках,
+// текст обычным шрифтом Golos Text, чтобы его читали и люди, и системы отбора резюме.
+// Тексты резюме лежат в data/resume.json, контакты и проверка данных общие с сайтом.
+// Фото, шрифт Golos Text (лицензия OFL в assets/OFL-GolosText.txt) и QR-код на сайт
+// лежат в assets/, пиксельный шрифт в fonts/.
+export const RESUME_PHOTO = 'assets/photo.jpg';
+export const RESUME_FONT = 'assets/golos-text.woff2';
+const GOLOS_FACE = `
+@font-face { font-family: 'Golos Text'; font-style: normal; font-weight: 400 900; font-display: block; src: url('${RESUME_FONT}') format('woff2'); }`;
+
 const RESUME_CSS = `
-@page { size: A4; margin: 10mm 12mm; }
-* { box-sizing: border-box; }
-html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { margin: 0; color: #1d1a26; font: 9.4pt/1.3 'PT Sans', 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; }
-main { max-width: 182mm; margin: 0 auto; }
+@page { size: A4; margin: 0; }
+:root { --ink: #2b2139; --muted: #5e5470; --paper: #fffdf8; --panel: #f4ecd8; --green: #3f7338; --gold: #e8b04b; --px: 0.55mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 210mm; height: 297mm; }
+body { font-family: 'Golos Text', 'PT Sans', Arial, sans-serif; font-size: 8.5pt; line-height: 1.4; color: var(--ink); background: var(--paper); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 a { color: inherit; text-decoration: none; }
-header { display: flex; gap: 5mm; align-items: center; border-bottom: 1.5pt solid #1d1a26; padding-bottom: 2.5mm; }
-header svg { width: 15mm; height: 15mm; flex: none; }
-h1 { font-size: 19pt; line-height: 1.1; margin: 0; }
-.role { font-size: 11pt; margin: 1mm 0 0; font-weight: bold; color: #4a3f5c; }
-.contacts { list-style: none; padding: 0; margin: 2.5mm 0 0; display: flex; flex-wrap: wrap; gap: 1mm 5mm; }
-.contacts span { color: #5e5470; }
-.lead { margin: 2.5mm 0 0; }
-h2 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.06em; color: #b0412c; margin: 3mm 0 1mm; }
-p { margin: 0 0 1.2mm; }
-.item { margin: 0 0 1.6mm; break-inside: avoid; }
-.item h3 { font-size: 10pt; margin: 0; display: flex; justify-content: space-between; gap: 4mm; }
-.item h3 a { font-weight: normal; color: #4a3f5c; font-size: 8.6pt; }
-.item ul { margin: 0.8mm 0 0; padding-left: 4.5mm; }
-.item li { margin: 0; }
-.stack-line { color: #4a3f5c; font-size: 8.6pt; margin: 0.8mm 0 0; }
-.rows { list-style: none; padding: 0; margin: 0; }
-.rows li { margin: 0 0 0.8mm; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 6mm; }
-@media screen { body { background: #eee; padding: 10mm 0; } main { background: #fff; padding: 10mm 12mm; box-shadow: 0 1px 6px rgba(0,0,0,.2); } }
+.nw { white-space: nowrap; }
+.page { width: 210mm; height: 297mm; display: grid; grid-template-columns: 1fr 66mm; overflow: hidden; }
+.main { padding: 11mm 9mm 9mm 12mm; display: flex; flex-direction: column; }
+h1 { font-family: 'Tiny5', monospace; font-weight: 400; font-size: 33pt; line-height: 0.95; letter-spacing: 0.3pt; }
+.title { margin-top: 3mm; font-size: 13pt; font-weight: 650; color: var(--green); }
+.summary { margin-top: 3mm; font-size: 9pt; line-height: 1.45; max-width: 128mm; }
+.seek { margin-top: 2.2mm; font-size: 9pt; font-weight: 550; }
+.facts { display: flex; gap: 3.2mm; margin-top: 4.2mm; margin-left: var(--px); }
+.fact { flex: 1; display: flex; align-items: center; gap: 2.2mm; padding: 1.8mm 2.6mm; background: #fff;
+  box-shadow: 0 calc(-1 * var(--px)) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink), calc(-1 * var(--px)) 0 0 0 var(--ink), var(--px) 0 0 0 var(--ink), calc(2.2 * var(--px)) calc(2.2 * var(--px)) 0 0 var(--gold); }
+.fact b { font-family: 'Tiny5', monospace; font-weight: 400; font-size: 17pt; line-height: 1; }
+.fact span { font-size: 7.6pt; line-height: 1.25; color: var(--muted); }
+h2 { font-family: 'Tiny5', monospace; font-weight: 400; font-size: 13pt; line-height: 1; margin: 5.2mm 0 2.2mm; display: flex; align-items: baseline; justify-content: space-between; }
+h2 small { font-family: 'Golos Text', sans-serif; font-size: 7.6pt; color: var(--muted); font-weight: 450; }
+.proj { margin-bottom: 2.1mm; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; }
+.proj .head { font-size: 9.4pt; font-weight: 650; color: var(--green); }
+.tag { font-size: 7.4pt; color: var(--muted); white-space: nowrap; }
+.proj p { margin-top: 0.6mm; }
+.job { margin-bottom: 2.8mm; }
+.job .head { font-size: 9.4pt; font-weight: 650; }
+.job .head span { font-weight: 450; color: var(--muted); }
+ul.sq { list-style: none; margin-top: 0.8mm; }
+ul.sq li { position: relative; padding-left: 3.4mm; margin-bottom: 0.7mm; }
+ul.sq li::before, .how li::before { content: ''; position: absolute; left: 0.3mm; top: 1.55mm; width: 1.2mm; height: 1.2mm; background: var(--gold); }
+.how { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2mm 5mm; }
+.how li { list-style: none; position: relative; padding-left: 3.4mm; }
+.how li::before { background: var(--green); }
+.side { background: var(--panel); padding: 11mm 8mm 9mm 8mm; display: flex; flex-direction: column; }
+.photo { position: relative; width: 46mm; height: 53mm; margin-bottom: 5.5mm; }
+.photo::before, .photo img { position: absolute; inset: 0;
+  clip-path: polygon(1.6mm 0, calc(100% - 1.6mm) 0, calc(100% - 1.6mm) 0.8mm, calc(100% - 0.8mm) 0.8mm, calc(100% - 0.8mm) 1.6mm, 100% 1.6mm, 100% calc(100% - 1.6mm), calc(100% - 0.8mm) calc(100% - 1.6mm), calc(100% - 0.8mm) calc(100% - 0.8mm), calc(100% - 1.6mm) calc(100% - 0.8mm), calc(100% - 1.6mm) 100%, 1.6mm 100%, 1.6mm calc(100% - 0.8mm), 0.8mm calc(100% - 0.8mm), 0.8mm calc(100% - 1.6mm), 0 calc(100% - 1.6mm), 0 1.6mm, 0.8mm 1.6mm, 0.8mm 0.8mm, 1.6mm 0.8mm); }
+.photo::before { content: ''; background: var(--ink); transform: translate(1.6mm, 1.6mm); }
+.photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; display: block; }
+.side h2 { font-size: 11.5pt; margin: 4.4mm 0 1.9mm; }
+.side h2:first-of-type { margin-top: 0; }
+.contacts { display: grid; grid-template-columns: auto 1fr; gap: 0.9mm 2.5mm; font-size: 8.3pt; }
+.contacts dt { color: var(--muted); }
+.contacts dd { font-weight: 550; }
+.stack div { margin-bottom: 1.1mm; line-height: 1.35; font-size: 8pt; }
+.stack b { font-weight: 650; }
+.stack span { color: var(--muted); }
+.edu { margin-bottom: 1.8mm; }
+.edu .head { font-weight: 650; display: flex; justify-content: space-between; gap: 2mm; }
+.edu .head span { font-weight: 450; color: var(--muted); white-space: nowrap; }
+.edu p { color: var(--muted); font-size: 8pt; line-height: 1.35; }
+.qr { margin-top: auto; display: flex; gap: 3mm; align-items: center; padding-top: 3mm; }
+.qr svg { width: 21mm; height: 21mm; flex: none; background: #fff; padding: 1.4mm; box-shadow: calc(1.6 * var(--px)) calc(1.6 * var(--px)) 0 0 var(--gold); }
+.qr p { font-size: 7.6pt; line-height: 1.35; color: var(--muted); }
+.qr p b { color: var(--ink); font-weight: 650; display: block; font-size: 8.2pt; }
+@media screen { html, body { width: auto; height: auto; } body { background: #e8e1cf; padding: 8mm 0; } .page { margin: 0 auto; box-shadow: 0 1px 8px rgba(0,0,0,.25); } }
 `;
 
 function linkTo(url, text) {
   return `<a href="${escapeHtml(safeUrl(url))}">${escapeHtml(text)}</a>`;
 }
 
-function renderResumeProject(p, detailed) {
-  const code = p.code ? linkTo(p.code, shortUrl(p.code)) : '';
-  const head = `<h3><span>${escapeHtml(p.title)}</span>${code}</h3>`;
-  if (!detailed) return `<div class="item">${head}<p>${escapeHtml(p.line)}</p></div>`;
-  const points = p.points.map((pt) => `<li>${escapeHtml(pt)}</li>`).join('');
-  return `<div class="item">${head}<p>${escapeHtml(p.line)}</p><ul>${points}</ul><p class="stack-line">${escapeHtml(p.stack.join(', '))}</p></div>`;
+// Слова через дефис (token-counter, ИИ-агенты) не рвутся на конце строки.
+function text(value) {
+  return escapeHtml(value).replace(/[^\s<>]+-[^\s<>]+/g, (w) => `<span class="nw">${w}</span>`);
 }
 
-const rows = (items) => `<ul class="rows">${items.map((e) => `<li><strong>${escapeHtml(e.place)}.</strong> ${escapeHtml(e.what)}</li>`).join('')}</ul>`;
+// Тексты резюме из data/resume.json: всё обязательное на месте, без длинных тире.
+export function validateResume(r) {
+  const errors = [];
+  const need = (cond, msg) => { if (!cond) errors.push(msg); };
+  const str = (v) => typeof v === 'string' && v.trim().length > 0;
+  const list = (v) => Array.isArray(v) && v.length > 0;
+  if (!r || typeof r !== 'object') return ['resume: нет данных резюме (data/resume.json)'];
+  for (const k of ['title', 'summary', 'seek', 'city']) need(str(r[k]), `resume.${k}: нужна непустая строка`);
+  for (const k of ['facts', 'projects', 'work', 'how', 'stack', 'education']) need(list(r[k]), `resume.${k}: нужен непустой список`);
+  for (const p of r.projects || []) need(str(p.title) && str(p.url) && str(p.text), `resume.projects: у проекта нужны title, url и text`);
+  for (const w of r.work || []) need(str(w.place) && str(w.period) && list(w.points), `resume.work: у места нужны place, period и points`);
+  need(!JSON.stringify(r).includes('\u2014'), 'resume: длинное тире в тексте');
+  return errors;
+}
 
-export function renderResume(profile, projects) {
+// assets: { photo: путь к фото, qr: SVG QR-кода на сайт }. Без них резюме собирается без фото и QR.
+export function renderResume(profile, projects, resume, assets = {}) {
   check(profile, projects);
+  const errors = validateResume(resume);
+  if (errors.length) throw new Error(`Ошибки в резюме:\n${errors.join('\n')}`);
   const data = Object.fromEntries(RESUME_FIELDS.map((k) => [k, profile[k]]));
-  const avatar = spriteToSvg(AVATAR, AVATAR_PALETTE);
+  const r = resume;
+
+  const facts = r.facts.map((f) => `<div class="fact"><b>${escapeHtml(f.value)}</b><span>${text(f.label)}</span></div>`).join('\n');
+  const proj = r.projects.map((p) => `<div class="proj"><div class="row"><a class="head" href="${escapeHtml(safeUrl(p.url))}">${escapeHtml(p.title)}</a><span class="tag">${escapeHtml(p.tag || '')}</span></div><p>${text(p.text)}</p></div>`).join('\n');
+  const work = r.work.map((w) => `<div class="job"><div class="row"><div class="head">${escapeHtml(w.place)}${w.role ? ` <span>${escapeHtml(w.role)}</span>` : ''}</div><span class="tag">${escapeHtml(w.period)}</span></div><ul class="sq">${w.points.map((pt) => `<li>${text(pt)}</li>`).join('')}</ul></div>`).join('\n');
+  const how = r.how.map((h) => `<li>${text(h)}</li>`).join('');
   const contacts = [
-    ...data.contacts.map((c) => `<li><span>${escapeHtml(c.label)}:</span> ${linkTo(c.url, c.kind === 'github' ? shortUrl(c.url) : c.value)}</li>`),
-    `<li><span>Сайт:</span> ${linkTo(SITE_URL, shortUrl(SITE_URL))}</li>`,
-  ].join('');
-  const main = projects.filter((p) => p.group === 'main').map((p) => renderResumeProject(p, true)).join('\n');
-  const personal = projects.filter((p) => p.group === 'personal').map((p) => renderResumeProject(p, false)).join('\n');
-  const stack = data.stack.map((g) => `<li><strong>${escapeHtml(g.group)}:</strong> ${escapeHtml(g.items.join(', '))}</li>`).join('');
-  const about = data.about.map((a) => `<p>${escapeHtml(a)}</p>`).join('\n');
+    `<dt>Город</dt><dd>${escapeHtml(r.city)}</dd>`,
+    ...data.contacts.map((c) => `<dt>${escapeHtml(c.label)}</dt><dd>${linkTo(c.url, c.value)}</dd>`),
+    `<dt>Сайт</dt><dd>${linkTo(SITE_URL, shortUrl(SITE_URL))}</dd>`,
+  ].join('\n');
+  const stack = r.stack.map((g) => `<div><b>${escapeHtml(g.group)}:</b> <span>${text(g.items.join(', '))}</span></div>`).join('\n');
+  const rowsOf = (items) => items.map((e) => `<div class="edu"><div class="head">${escapeHtml(e.place)}${e.period ? ` <span>${escapeHtml(e.period)}</span>` : ''}</div><p>${text(e.what)}</p></div>`).join('\n');
+  const photo = assets.photo ? `<div class="photo"><img src="${escapeHtml(assets.photo)}" alt="${escapeHtml(data.name)}"></div>` : '';
+  const qr = assets.qr ? `<div class="qr"><a href="${SITE_URL}">${assets.qr}</a><p><b>${escapeHtml(r.qr?.title || 'Сайт-резюме')}</b>${escapeHtml(shortUrl(SITE_URL))}<br>${escapeHtml(r.qr?.text || '')}</p></div>` : '';
 
   return `<!doctype html>
 <html lang="ru">
@@ -127,31 +186,42 @@ export function renderResume(profile, projects) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(data.name)}, резюме</title>
 <meta name="robots" content="noindex">
-<style>${RESUME_CSS}</style>
+<link rel="stylesheet" href="fonts/tiny5.css">
+<style>${GOLOS_FACE}${RESUME_CSS}</style>
 </head>
 <body>
-<main>
-<header>
-${avatar}
-<div>
+<div class="page">
+<main class="main">
 <h1>${escapeHtml(data.name)}</h1>
-<p class="role">${escapeHtml(data.role)}</p>
-<ul class="contacts">${contacts}</ul>
+<div class="title">${text(r.title)}</div>
+<p class="summary">${text(r.summary)}</p>
+<p class="seek">${text(r.seek)}</p>
+<div class="facts">
+${facts}
 </div>
-</header>
-<p class="lead">${escapeHtml(data.direction)} ${escapeHtml(data.lookingFor)}</p>
-<h2>О себе</h2>
-${about}
-<h2>Проекты</h2>
-${main}
-${personal ? `<h2>Личные проекты</h2>\n<div class="two">\n${personal}\n</div>` : ''}
-<div class="two">
-<section><h2>Опыт</h2>${rows(data.work)}</section>
-<section><h2>Образование</h2>${rows(data.education)}</section>
-</div>
-<h2>Стек</h2>
-<ul class="rows">${stack}</ul>
+<h2>Проекты <small>${linkTo(data.contacts.find((c) => c.kind === 'github')?.url || SITE_URL, shortUrl(data.contacts.find((c) => c.kind === 'github')?.url || SITE_URL))}</small></h2>
+${proj}
+<h2>Опыт работы</h2>
+${work}
+<h2>Как работаю</h2>
+<ul class="how">${how}</ul>
 </main>
+<aside class="side">
+${photo}
+<h2>Контакты</h2>
+<dl class="contacts">
+${contacts}
+</dl>
+<h2>Стек</h2>
+<div class="stack">
+${stack}
+</div>
+<h2>Образование</h2>
+${rowsOf(r.education)}
+${r.courses?.length ? `<h2>Курсы</h2>\n${rowsOf(r.courses)}` : ''}
+${qr}
+</aside>
+</div>
 </body>
 </html>
 `;

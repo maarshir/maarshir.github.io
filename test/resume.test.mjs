@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
-import { buildResume, buildOgCard, loadData } from '../scripts/build.mjs';
+import { buildResume, buildOgCard, loadData, loadResume } from '../scripts/build.mjs';
 import { sourceHashes, STAMP } from '../scripts/render-assets.mjs';
-import { renderResume, renderHead, pageDescription, shortUrl, SITE_URL, OG_IMAGE, OG_W, OG_H, RESUME_PDF } from '../js/resume.mjs';
+import { renderResume, validateResume, renderHead, pageDescription, shortUrl, SITE_URL, OG_IMAGE, OG_W, OG_H, RESUME_PDF } from '../js/resume.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = (p) => readFile(new URL(p, root), 'utf8');
@@ -39,20 +39,39 @@ test('og.png: PNG 1200×630, как ждут мессенджеры', async () =
 
 test('в резюме все контакты, основные проекты со ссылкой на код и адрес сайта', async () => {
   const { profile, projects } = await loadData();
+  const { resume } = await loadResume();
   const html = await read('resume.html');
   for (const c of profile.contacts) assert.ok(html.includes(`href="${c.url}"`), `нет контакта ${c.label}`);
-  for (const p of projects) {
+  for (const p of projects.filter((x) => x.group === 'main')) {
     assert.ok(html.includes(p.title), `нет проекта ${p.title}`);
-    if (p.code) assert.ok(html.includes(`href="${p.code}"`), `нет ссылки на код ${p.title}`);
+    assert.ok(html.includes(`href="${p.code}"`), `нет ссылки на код ${p.title}`);
   }
+  for (const p of resume.projects) assert.ok(html.includes(`href="${p.url}"`), `нет ссылки ${p.title}`);
   assert.ok(html.includes(`href="${SITE_URL}"`));
   for (const e of [...profile.education, ...profile.work]) assert.ok(html.includes(e.place));
 });
 
+test('в резюме фото, шрифт и QR-код на сайт, всё локальное', async () => {
+  const html = await read('resume.html');
+  assert.match(html, /<img src="assets\/photo\.jpg"/);
+  assert.match(html, /url\('assets\/golos-text\.woff2'\)/);
+  assert.match(html, /<div class="qr"><a href="https:\/\/maarshir\.github\.io\/"><svg /);
+  for (const f of ['assets/photo.jpg', 'assets/golos-text.woff2', 'assets/OFL-GolosText.txt', 'fonts/tiny5.css']) await access(new URL(f, root));
+});
+
+test('проверка ловит неполные тексты резюме и длинные тире', async () => {
+  const { resume } = await loadResume();
+  assert.deepEqual(validateResume(resume), []);
+  assert.match(validateResume({ ...resume, title: '' }).join('\n'), /resume\.title/);
+  assert.match(validateResume({ ...resume, projects: [] }).join('\n'), /resume\.projects/);
+  assert.match(validateResume({ ...resume, seek: 'Ищу \u2014 работу' }).join('\n'), /длинное тире/);
+});
+
 test('в резюме только разрешённые поля: ничего лишнего из profile.json не утекает', async () => {
   const { profile, projects } = await loadData();
+  const { resume, assets } = await loadResume();
   const extra = { ...profile, phone: '+7 900 000-00-00', birthday: '01.01.2000' };
-  const html = renderResume(extra, projects);
+  const html = renderResume(extra, projects, resume, assets);
   assert.ok(!html.includes('900 000'), 'телефон попал в резюме');
   assert.ok(!html.includes('01.01.2000'), 'дата рождения попала в резюме');
   assert.ok(!html.includes(profile.now), 'строка «Сейчас» быстро устаревает и в PDF не нужна');
@@ -60,7 +79,9 @@ test('в резюме только разрешённые поля: ничего
 
 test('резюме не собирается из неполных данных', async () => {
   const { profile, projects } = await loadData();
-  assert.throws(() => renderResume({ ...profile, name: '' }, projects), /profile\.name/);
+  const { resume, assets } = await loadResume();
+  assert.throws(() => renderResume({ ...profile, name: '' }, projects, resume, assets), /profile\.name/);
+  assert.throws(() => renderResume(profile, projects, undefined, assets), /data\/resume\.json/);
 });
 
 test('без длинных тире и внешних подключений в резюме и превью', async () => {

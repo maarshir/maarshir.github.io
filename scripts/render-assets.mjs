@@ -38,6 +38,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     const page = await browser.newPage();
     await page.goto(new URL(SOURCES.pdf, root).href);
+    await page.evaluate(() => document.fonts.ready);
     await page.pdf({ path: fileURLToPath(new URL('resume.pdf', root)), format: 'A4', preferCSSPageSize: true, printBackground: true });
 
     await page.setViewportSize({ width: OG_W, height: OG_H });
