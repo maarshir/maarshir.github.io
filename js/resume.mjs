@@ -63,7 +63,7 @@ export function renderHead(profile, projects) {
   ].join('\n');
 }
 
-// Резюме на одну страницу A4 в стиле сайта: пиксельный шрифт только в имени и заголовках,
+// Резюме на одну страницу A4 в стиле сайта: пиксельный шрифт только в заголовках разделов,
 // текст обычным шрифтом Golos Text, чтобы его читали и люди, и системы отбора резюме.
 // Тексты резюме лежат в data/resume.json, контакты и проверка данных общие с сайтом.
 // Фото, шрифт Golos Text (лицензия OFL в assets/OFL-GolosText.txt) и QR-код на сайт
@@ -83,7 +83,7 @@ a { color: inherit; text-decoration: none; }
 .nw { white-space: nowrap; }
 .page { width: 210mm; height: 297mm; display: grid; grid-template-columns: 1fr 66mm; overflow: hidden; }
 .main { padding: 11mm 9mm 9mm 12mm; display: flex; flex-direction: column; }
-h1 { font-family: 'Tiny5', monospace; font-weight: 400; font-size: 33pt; line-height: 0.95; letter-spacing: 0.3pt; }
+h1 { font-family: 'Golos Text', sans-serif; font-weight: 700; font-size: 30pt; line-height: 1; letter-spacing: -0.3pt; }
 .title { margin-top: 3mm; font-size: 13pt; font-weight: 650; color: var(--green); }
 .summary { margin-top: 3mm; font-size: 9pt; line-height: 1.45; max-width: 128mm; }
 .seek { margin-top: 2.2mm; font-size: 9pt; font-weight: 550; }
@@ -150,10 +150,10 @@ export function validateResume(r) {
   const list = (v) => Array.isArray(v) && v.length > 0;
   if (!r || typeof r !== 'object') return ['resume: нет данных резюме (data/resume.json)'];
   for (const k of ['title', 'summary', 'seek', 'city']) need(str(r[k]), `resume.${k}: нужна непустая строка`);
-  for (const k of ['facts', 'projects', 'work', 'how', 'stack', 'education']) need(list(r[k]), `resume.${k}: нужен непустой список`);
+  for (const k of ['projects', 'work', 'how', 'stack', 'education']) need(list(r[k]), `resume.${k}: нужен непустой список`);
   for (const p of r.projects || []) need(str(p.title) && str(p.url) && str(p.text), `resume.projects: у проекта нужны title, url и text`);
   for (const w of r.work || []) need(str(w.place) && str(w.period) && list(w.points), `resume.work: у места нужны place, period и points`);
-  need(!JSON.stringify(r).includes('\u2014'), 'resume: длинное тире в тексте');
+  need(!JSON.stringify(r).includes('—'), 'resume: длинное тире в тексте');
   return errors;
 }
 
@@ -165,7 +165,7 @@ export function renderResume(profile, projects, resume, assets = {}) {
   const data = Object.fromEntries(RESUME_FIELDS.map((k) => [k, profile[k]]));
   const r = resume;
 
-  const facts = r.facts.map((f) => `<div class="fact"><b>${escapeHtml(f.value)}</b><span>${text(f.label)}</span></div>`).join('\n');
+  const facts = (r.facts || []).map((f) => `<div class="fact"><b>${escapeHtml(f.value)}</b><span>${text(f.label)}</span></div>`).join('\n');
   const proj = r.projects.map((p) => `<div class="proj"><div class="row"><a class="head" href="${escapeHtml(safeUrl(p.url))}">${escapeHtml(p.title)}</a><span class="tag">${escapeHtml(p.tag || '')}</span></div><p>${text(p.text)}</p></div>`).join('\n');
   const work = r.work.map((w) => `<div class="job"><div class="row"><div class="head">${escapeHtml(w.place)}${w.role ? ` <span>${escapeHtml(w.role)}</span>` : ''}</div><span class="tag">${escapeHtml(w.period)}</span></div><ul class="sq">${w.points.map((pt) => `<li>${text(pt)}</li>`).join('')}</ul></div>`).join('\n');
   const how = r.how.map((h) => `<li>${text(h)}</li>`).join('');
@@ -196,10 +196,7 @@ export function renderResume(profile, projects, resume, assets = {}) {
 <div class="title">${text(r.title)}</div>
 <p class="summary">${text(r.summary)}</p>
 <p class="seek">${text(r.seek)}</p>
-<div class="facts">
-${facts}
-</div>
-<h2>Проекты <small>${linkTo(data.contacts.find((c) => c.kind === 'github')?.url || SITE_URL, shortUrl(data.contacts.find((c) => c.kind === 'github')?.url || SITE_URL))}</small></h2>
+${facts ? `<div class="facts">\n${facts}\n</div>\n` : ''}<h2>Проекты <small>${linkTo(data.contacts.find((c) => c.kind === 'github')?.url || SITE_URL, shortUrl(data.contacts.find((c) => c.kind === 'github')?.url || SITE_URL))}</small></h2>
 ${proj}
 <h2>Опыт работы</h2>
 ${work}
