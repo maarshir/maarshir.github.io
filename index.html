@@ -137,6 +137,13 @@ document.documentElement.className = 'js' + (location.hash === '#town' ? ' town-
 <details class="more"><summary>Подробнее</summary><p>Считает стоимость запросов к языковым моделям по токенам из ответа API или прикидкой ещё до отправки.</p><ul class="points"><li>Точная денежная арифметика в Decimal</li><li>Таблица цен, у каждой цены дата сверки и источник</li><li>Библиотека и командная строка, им считает цену promptdiff</li></ul></details>
 <p class="card-links"><a class="btn" href="https://github.com/maarshir/token-counter" target="_blank" rel="noopener">Код</a></p>
 </article>
+<article class="card" id="project-content-factory">
+<h3>content-factory</h3>
+<p class="card-line">Превращает новости из RSS в посты для Телеграма, а публикует их только после кнопки редактора.</p>
+<ul class="tags" aria-label="Технологии"><li>n8n</li><li>JavaScript</li><li>SQLite</li></ul>
+<details class="more"><summary>Подробнее</summary><p>Конвейеры на n8n: собирают новости из лент RSS, отсеивают повторы и нерелевантное, нейросеть пишет черновик поста, редактор в боте публикует, отклоняет или отправляет его переписать. Статус: в работе, проверка в живом n8n идёт сейчас.</p><ul class="points"><li>Код узлов в обычных файлах с тестами, сборка вклеивает его в конвейеры</li><li>Очередь публикации в SQLite переживает перезапуск, пост после трёх ошибок Телеграма пропускается</li><li>Интервал между постами и тихие часы ночью</li><li>Журнал с причиной отказа для каждой новости</li></ul></details>
+<p class="card-links"><a class="btn" href="https://github.com/maarshir/content-factory" target="_blank" rel="noopener">Код</a></p>
+</article>
 </div>
 </section>
 
