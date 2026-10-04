@@ -1,5 +1,5 @@
 {
   "note": "Хэши исходных HTML, из которых собраны resume.pdf и assets/og.png. Пишет npm run assets.",
-  "pdf": "3afbd3b464bf210c2c776ba4e7bf52b5cbe2996839ebdb2d6647d01fad846e74",
+  "pdf": "e2fd6141b1b2bb303cb3edf98e082fe3d22080e57b583c469b539ecafbe4853e",
   "og": "c248affae1a67d001d8d2be8558213aca9e3a0b484d4c6f85a73a321a63b440f"
 }

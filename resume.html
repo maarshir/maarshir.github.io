@@ -5,63 +5,121 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Иван Капустин, резюме</title>
 <meta name="robots" content="noindex">
+<link rel="stylesheet" href="fonts/tiny5.css">
 <style>
-@page { size: A4; margin: 10mm 12mm; }
-* { box-sizing: border-box; }
-html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { margin: 0; color: #1d1a26; font: 9.4pt/1.3 'PT Sans', 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; }
-main { max-width: 182mm; margin: 0 auto; }
+@font-face { font-family: 'Golos Text'; font-style: normal; font-weight: 400 900; font-display: block; src: url('assets/golos-text.woff2') format('woff2'); }
+@page { size: A4; margin: 0; }
+:root { --ink: #2b2139; --muted: #5e5470; --paper: #fffdf8; --panel: #f4ecd8; --green: #3f7338; --gold: #e8b04b; --px: 0.55mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 210mm; height: 297mm; }
+body { font-family: 'Golos Text', 'PT Sans', Arial, sans-serif; font-size: 8.5pt; line-height: 1.4; color: var(--ink); background: var(--paper); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 a { color: inherit; text-decoration: none; }
-header { display: flex; gap: 5mm; align-items: center; border-bottom: 1.5pt solid #1d1a26; padding-bottom: 2.5mm; }
-header svg { width: 15mm; height: 15mm; flex: none; }
-h1 { font-size: 19pt; line-height: 1.1; margin: 0; }
-.role { font-size: 11pt; margin: 1mm 0 0; font-weight: bold; color: #4a3f5c; }
-.contacts { list-style: none; padding: 0; margin: 2.5mm 0 0; display: flex; flex-wrap: wrap; gap: 1mm 5mm; }
-.contacts span { color: #5e5470; }
-.lead { margin: 2.5mm 0 0; }
-h2 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.06em; color: #b0412c; margin: 3mm 0 1mm; }
-p { margin: 0 0 1.2mm; }
-.item { margin: 0 0 1.6mm; break-inside: avoid; }
-.item h3 { font-size: 10pt; margin: 0; display: flex; justify-content: space-between; gap: 4mm; }
-.item h3 a { font-weight: normal; color: #4a3f5c; font-size: 8.6pt; }
-.item ul { margin: 0.8mm 0 0; padding-left: 4.5mm; }
-.item li { margin: 0; }
-.stack-line { color: #4a3f5c; font-size: 8.6pt; margin: 0.8mm 0 0; }
-.rows { list-style: none; padding: 0; margin: 0; }
-.rows li { margin: 0 0 0.8mm; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 6mm; }
-@media screen { body { background: #eee; padding: 10mm 0; } main { background: #fff; padding: 10mm 12mm; box-shadow: 0 1px 6px rgba(0,0,0,.2); } }
+.nw { white-space: nowrap; }
+.page { width: 210mm; height: 297mm; display: grid; grid-template-columns: 1fr 66mm; overflow: hidden; }
+.main { padding: 11mm 9mm 9mm 12mm; display: flex; flex-direction: column; }
+h1 { font-family: 'Tiny5', monospace; font-weight: 400; font-size: 33pt; line-height: 0.95; letter-spacing: 0.3pt; }
+.title { margin-top: 3mm; font-size: 13pt; font-weight: 650; color: var(--green); }
+.summary { margin-top: 3mm; font-size: 9pt; line-height: 1.45; max-width: 128mm; }
+.seek { margin-top: 2.2mm; font-size: 9pt; font-weight: 550; }
+.facts { display: flex; gap: 3.2mm; margin-top: 4.2mm; margin-left: var(--px); }
+.fact { flex: 1; display: flex; align-items: center; gap: 2.2mm; padding: 1.8mm 2.6mm; background: #fff;
+  box-shadow: 0 calc(-1 * var(--px)) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink), calc(-1 * var(--px)) 0 0 0 var(--ink), var(--px) 0 0 0 var(--ink), calc(2.2 * var(--px)) calc(2.2 * var(--px)) 0 0 var(--gold); }
+.fact b { font-family: 'Tiny5', monospace; font-weight: 400; font-size: 17pt; line-height: 1; }
+.fact span { font-size: 7.6pt; line-height: 1.25; color: var(--muted); }
+h2 { font-family: 'Tiny5', monospace; font-weight: 400; font-size: 13pt; line-height: 1; margin: 5.2mm 0 2.2mm; display: flex; align-items: baseline; justify-content: space-between; }
+h2 small { font-family: 'Golos Text', sans-serif; font-size: 7.6pt; color: var(--muted); font-weight: 450; }
+.proj { margin-bottom: 2.1mm; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; }
+.proj .head { font-size: 9.4pt; font-weight: 650; color: var(--green); }
+.tag { font-size: 7.4pt; color: var(--muted); white-space: nowrap; }
+.proj p { margin-top: 0.6mm; }
+.job { margin-bottom: 2.8mm; }
+.job .head { font-size: 9.4pt; font-weight: 650; }
+.job .head span { font-weight: 450; color: var(--muted); }
+ul.sq { list-style: none; margin-top: 0.8mm; }
+ul.sq li { position: relative; padding-left: 3.4mm; margin-bottom: 0.7mm; }
+ul.sq li::before, .how li::before { content: ''; position: absolute; left: 0.3mm; top: 1.55mm; width: 1.2mm; height: 1.2mm; background: var(--gold); }
+.how { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2mm 5mm; }
+.how li { list-style: none; position: relative; padding-left: 3.4mm; }
+.how li::before { background: var(--green); }
+.side { background: var(--panel); padding: 11mm 8mm 9mm 8mm; display: flex; flex-direction: column; }
+.photo { position: relative; width: 46mm; height: 53mm; margin-bottom: 5.5mm; }
+.photo::before, .photo img { position: absolute; inset: 0;
+  clip-path: polygon(1.6mm 0, calc(100% - 1.6mm) 0, calc(100% - 1.6mm) 0.8mm, calc(100% - 0.8mm) 0.8mm, calc(100% - 0.8mm) 1.6mm, 100% 1.6mm, 100% calc(100% - 1.6mm), calc(100% - 0.8mm) calc(100% - 1.6mm), calc(100% - 0.8mm) calc(100% - 0.8mm), calc(100% - 1.6mm) calc(100% - 0.8mm), calc(100% - 1.6mm) 100%, 1.6mm 100%, 1.6mm calc(100% - 0.8mm), 0.8mm calc(100% - 0.8mm), 0.8mm calc(100% - 1.6mm), 0 calc(100% - 1.6mm), 0 1.6mm, 0.8mm 1.6mm, 0.8mm 0.8mm, 1.6mm 0.8mm); }
+.photo::before { content: ''; background: var(--ink); transform: translate(1.6mm, 1.6mm); }
+.photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; display: block; }
+.side h2 { font-size: 11.5pt; margin: 4.4mm 0 1.9mm; }
+.side h2:first-of-type { margin-top: 0; }
+.contacts { display: grid; grid-template-columns: auto 1fr; gap: 0.9mm 2.5mm; font-size: 8.3pt; }
+.contacts dt { color: var(--muted); }
+.contacts dd { font-weight: 550; }
+.stack div { margin-bottom: 1.1mm; line-height: 1.35; font-size: 8pt; }
+.stack b { font-weight: 650; }
+.stack span { color: var(--muted); }
+.edu { margin-bottom: 1.8mm; }
+.edu .head { font-weight: 650; display: flex; justify-content: space-between; gap: 2mm; }
+.edu .head span { font-weight: 450; color: var(--muted); white-space: nowrap; }
+.edu p { color: var(--muted); font-size: 8pt; line-height: 1.35; }
+.qr { margin-top: auto; display: flex; gap: 3mm; align-items: center; padding-top: 3mm; }
+.qr svg { width: 21mm; height: 21mm; flex: none; background: #fff; padding: 1.4mm; box-shadow: calc(1.6 * var(--px)) calc(1.6 * var(--px)) 0 0 var(--gold); }
+.qr p { font-size: 7.6pt; line-height: 1.35; color: var(--muted); }
+.qr p b { color: var(--ink); font-weight: 650; display: block; font-size: 8.2pt; }
+@media screen { html, body { width: auto; height: auto; } body { background: #e8e1cf; padding: 8mm 0; } .page { margin: 0 auto; box-shadow: 0 1px 8px rgba(0,0,0,.25); } }
 </style>
 </head>
 <body>
-<main>
-<header>
-<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="1" width="6" height="1" fill="#3b2a20"/><rect x="4" y="2" width="8" height="1" fill="#3b2a20"/><rect x="3" y="3" width="10" height="1" fill="#3b2a20"/><rect x="3" y="4" width="2" height="1" fill="#3b2a20"/><rect x="5" y="4" width="6" height="1" fill="#f1c9a5"/><rect x="11" y="4" width="2" height="1" fill="#3b2a20"/><rect x="3" y="5" width="1" height="1" fill="#3b2a20"/><rect x="4" y="5" width="8" height="1" fill="#f1c9a5"/><rect x="12" y="5" width="1" height="1" fill="#3b2a20"/><rect x="3" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="5" y="6" width="1" height="1" fill="#2b2139"/><rect x="6" y="6" width="4" height="1" fill="#f1c9a5"/><rect x="10" y="6" width="1" height="1" fill="#2b2139"/><rect x="11" y="6" width="2" height="1" fill="#f1c9a5"/><rect x="3" y="7" width="10" height="1" fill="#f1c9a5"/><rect x="3" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="6" y="8" width="4" height="1" fill="#b5534a"/><rect x="10" y="8" width="3" height="1" fill="#f1c9a5"/><rect x="4" y="9" width="8" height="1" fill="#f1c9a5"/><rect x="6" y="10" width="4" height="1" fill="#f1c9a5"/><rect x="3" y="11" width="10" height="1" fill="#4a78b5"/><rect x="2" y="12" width="5" height="1" fill="#4a78b5"/><rect x="7" y="12" width="2" height="1" fill="#f4ecd8"/><rect x="9" y="12" width="5" height="1" fill="#4a78b5"/><rect x="2" y="13" width="12" height="1" fill="#4a78b5"/><rect x="1" y="14" width="14" height="1" fill="#4a78b5"/><rect x="1" y="15" width="14" height="1" fill="#4a78b5"/></svg>
-<div>
+<div class="page">
+<main class="main">
 <h1>Иван Капустин</h1>
-<p class="role">Разработчик. Веб-приложения, боты, автоматизация</p>
-<ul class="contacts"><li><span>Телеграм:</span> <a href="https://t.me/kaioann">@kaioann</a></li><li><span>Почта:</span> <a href="mailto:ivan_ius@mail.ru">ivan_ius@mail.ru</a></li><li><span>Гитхаб:</span> <a href="https://github.com/maarshir">github.com/maarshir</a></li><li><span>Сайт:</span> <a href="https://maarshir.github.io/">maarshir.github.io</a></li></ul>
+<div class="title"><span class="nw">ИИ-инженер,</span> <span class="nw">Python-разработчик</span></div>
+<p class="summary">Окончил РТУ МИРЭА по <span class="nw">фулстек-разработке,</span> учусь в магистратуре, работаю на фрилансе. Делаю приложения на языковых моделях, ботов в Телеграме и автоматизацию на n8n, пишу на Python и JavaScript.</p>
+<p class="seek">Открыт к предложениям в <span class="nw">ИИ-инженерии,</span> разработке на Python и автоматизации.</p>
+<div class="facts">
+<div class="fact"><b>7</b><span>открытых проектов на Гитхабе</span></div>
+<div class="fact"><b>1+</b><span>год работы на фрилансе</span></div>
+<div class="fact"><b>2</b><span>конвейера n8n на своём сервере</span></div>
 </div>
-</header>
-<p class="lead">Расту в сторону ИИ-инженерии: приложения на языковых моделях и проверка качества их ответов. Открыт для стажировки и предложений о работе.</p>
-<h2>О себе</h2>
-<p>Делаю веб-приложения, ботов в Телеграме и автоматизацию на Питоне и JavaScript. Работаю на фрилансе и учусь в магистратуре.</p>
-<p>Последние проекты про языковые модели: как сравнивать промпты на наборе задач с чёткими проверками, сколько стоит каждый запрос и как отвечать по своим документам со ссылкой на источник, а не выдумывать.</p>
-<h2>Проекты</h2>
-<div class="item"><h3><span>promptdiff</span><a href="https://github.com/maarshir/promptdiff-">github.com/maarshir/promptdiff-</a></h3><p>Сравнивает варианты промпта на наборе задач.</p><ul><li>Чёткие проверки ответов вместо оценки на глаз</li><li>Асинхронные запросы с повторами, ограничением частоты и паузой по retry-after</li><li>Кэш ответов на диске и цена каждого варианта через token-counter</li><li>Два поставщика: Anthropic и Groq с бесплатным уровнем</li></ul><p class="stack-line">Python, asyncio, httpx, pytest</p></div>
-<div class="item"><h3><span>doc-answers</span><a href="https://github.com/maarshir/doc-answers">github.com/maarshir/doc-answers</a></h3><p>Ответы по вашим документам со ссылкой на источник.</p><ul><li>Поиск BM25 по основам слов, без векторной базы</li><li>Ссылки модели на источники проверяются кодом после ответа</li><li>Набор вопросов отдельно проверяет поиск и ответы модели</li><li>Демонстрационный режим без ключа</li></ul><p class="stack-line">Python, RAG, BM25, pytest</p></div>
-<div class="item"><h3><span>gost-skills</span><a href="https://github.com/maarshir/gost-skills">github.com/maarshir/gost-skills</a></h3><p>Проверяет оформление курсовых и отчётов в .docx по ГОСТу и показывает, где ошибка.</p><ul><li>Поля, шрифт, интервалы, заголовки, подписи рисунков и таблиц, ссылки на источники</li><li>Свойства текста ищутся по цепочке стилей, как их видит Word</li><li>Настройки под методичку в TOML поверх профиля ГОСТ</li><li>Тесты на файлах, собранных кодом, и проверка SKILL.md по спецификации</li></ul><p class="stack-line">Python, python-docx, Agent Skills, pytest</p></div>
-<h2>Личные проекты</h2>
-<div class="two">
-<div class="item"><h3><span>Ассистент</span></h3><p>Сайт и бот в Телеграме для записей дня, свободные фразы и голосовые разбирает модель.</p></div>
-<div class="item"><h3><span>token-counter</span><a href="https://github.com/maarshir/token-counter">github.com/maarshir/token-counter</a></h3><p>Токены и стоимость запросов к языковым моделям.</p></div>
-</div>
-<div class="two">
-<section><h2>Опыт</h2><ul class="rows"><li><strong>Фриланс.</strong> Веб-приложения, боты и автоматизация под задачи заказчиков.</li></ul></section>
-<section><h2>Образование</h2><ul class="rows"><li><strong>Магистратура.</strong> Учусь сейчас.</li><li><strong>РТУ МИРЭА.</strong> Направление: фулстек-разработка. Выпускная работа: «Разработка мобильного приложения для контроля личных задач и напоминаний».</li></ul></section>
-</div>
-<h2>Стек</h2>
-<ul class="rows"><li><strong>Питон:</strong> Python, FastAPI, SQLAlchemy, asyncio, httpx, pytest</li><li><strong>Веб:</strong> JavaScript, HTML и CSS, Tailwind, Supabase</li><li><strong>Данные и деплой:</strong> PostgreSQL, GitHub Actions, Vercel, обычные серверы</li><li><strong>Модели:</strong> API Anthropic, Groq (совместимый с OpenAI), RAG и BM25, оценка ответов на наборе задач</li><li><strong>Телеграм:</strong> боты, мини-приложения</li></ul>
+<h2>Проекты <small><a href="https://github.com/maarshir">github.com/maarshir</a></small></h2>
+<div class="proj"><div class="row"><a class="head" href="https://github.com/maarshir/doc-answers">doc-answers</a><span class="tag">Python, BM25, API моделей</span></div><p>Ответы по папке документов со ссылкой на источник после каждого факта. Каждая ссылка модели сверяется с полученными фрагментами; если ответа в документах нет, программа так и говорит.</p></div>
+<div class="proj"><div class="row"><a class="head" href="https://github.com/maarshir/promptdiff-">promptdiff и token-counter</a><span class="tag">Python, API Anthropic и Groq</span></div><p>Сравнивает варианты промпта на одном наборе задач: сколько задач прошёл каждый, где ответы разошлись и сколько стоил прогон. Цену считает <span class="nw">token-counter,</span> отдельная библиотека с точным расчётом в Decimal.</p></div>
+<div class="proj"><div class="row"><a class="head" href="https://github.com/maarshir/gost-skills">gost-skills</a><span class="tag">Python, python-docx, навыки агентов</span></div><p>Навыки для <span class="nw">ИИ-агентов</span> (Claude Code, Codex, Cursor): проверяют курсовые, ВКР и списки литературы по ГОСТ 7.32 и ГОСТ Р 7.0.100 и показывают, что и где исправить в Word.</p></div>
+<div class="proj"><div class="row"><a class="head" href="https://github.com/maarshir/job-radar">job-radar и content-factory</a><span class="tag">n8n, Node.js, Docker, свой сервер</span></div><p><span class="nw">job-radar</span> собирает вакансии с hh.ru и каналов, нейросеть оценивает их под профиль, лучшие приходят в Телеграм. <span class="nw">content-factory</span> готовит посты из лент RSS, редактор одобряет их в боте (в работе).</p></div>
+<div class="proj"><div class="row"><a class="head" href="https://maarshir.github.io/">maarshir.github.io</a><span class="tag">HTML, CSS, JavaScript</span></div><p>Личный <span class="nw">сайт-резюме,</span> в процессе работы.</p></div>
+<h2>Опыт работы</h2>
+<div class="job"><div class="row"><div class="head">Фриланс <span>разработчик</span></div><span class="tag">с сентября 2025</span></div><ul class="sq"><li><span class="nw">Бот-напоминалка</span> в Телеграме: задачи пишутся обычной фразой, даты разбирает свой парсер русского языка. Python, APScheduler, Google Таблицы, Railway.</li><li>Поставщику продуктов для ресторанов: бот сверяет фото прайса конкурента с прайсом компании (Groq, rapidfuzz), анимированный лендинг на React.</li><li>Сведение <span class="nw">прайс-листов</span> разной структуры в одну таблицу Excel через Python.</li></ul></div>
+<div class="job"><div class="row"><div class="head">Деловой вектор <span>строительная компания</span></div><span class="tag">февраль–сентябрь 2025</span></div><ul class="sq"><li>Вёл таблицы в Excel, готовил документы в Word и презентации в PowerPoint.</li></ul></div>
+<h2>Как работаю</h2>
+<ul class="how"><li>Довожу проекты до конца: рабочий запуск, инструкция, развёртывание на сервере.</li><li>Качество ответов модели оцениваю на наборах задач с чёткими критериями.</li><li>Быстро осваиваю новое: n8n изучил с нуля и поднял на своём сервере.</li><li>Пишу код вместе с <span class="nw">ИИ-агентами</span> в Claude Code и Codex, проверяю каждое изменение.</li></ul>
 </main>
+<aside class="side">
+<div class="photo"><img src="assets/photo.jpg" alt="Иван Капустин"></div>
+<h2>Контакты</h2>
+<dl class="contacts">
+<dt>Город</dt><dd>Москва</dd>
+<dt>Телеграм</dt><dd><a href="https://t.me/kaioann">@kaioann</a></dd>
+<dt>Почта</dt><dd><a href="mailto:ivan_ius@mail.ru">ivan_ius@mail.ru</a></dd>
+<dt>Гитхаб</dt><dd><a href="https://github.com/maarshir">maarshir</a></dd>
+<dt>Сайт</dt><dd><a href="https://maarshir.github.io/">maarshir.github.io</a></dd>
+</dl>
+<h2>Стек</h2>
+<div class="stack">
+<div><b>Python:</b> <span>FastAPI, SQLAlchemy, asyncio, httpx, pytest</span></div>
+<div><b>JavaScript:</b> <span>Node.js, React, Framer Motion, Tailwind</span></div>
+<div><b>Языковые модели:</b> <span>Claude и GPT через API, Groq, RAG и BM25, оценка ответов, навыки агентов, Claude Code, Codex</span></div>
+<div><b>Данные:</b> <span>PostgreSQL, SQLite, Supabase, pandas, Google Таблицы</span></div>
+<div><b>Автоматизация:</b> <span>n8n, боты и <span class="nw">мини-приложения</span> Телеграма</span></div>
+<div><b>Инфраструктура:</b> <span>Docker, Linux, GitHub Actions, Vercel, Railway</span></div>
+<div><b>Офис:</b> <span>Excel, Word, PowerPoint</span></div>
+</div>
+<h2>Образование</h2>
+<div class="edu"><div class="head">РТУ МИРЭА <span>с 2026</span></div><p>Магистратура, учусь сейчас.</p></div>
+<div class="edu"><div class="head">РТУ МИРЭА <span>2022–2026</span></div><p>Бакалавриат, <span class="nw">фулстек-разработка.</span> ВКР: мобильное приложение для задач и напоминаний на Flutter.</p></div>
+<div class="edu"><div class="head">Школа 21 от Сбера <span>учусь сейчас</span></div><p>Программирование на проектах с проверкой от других участников.</p></div>
+<h2>Курсы</h2>
+<div class="edu"><div class="head">Яндекс Практикум</div><p><span class="nw">ИИ-автоматизация,</span> <span class="nw">ИИ-агенты.</span></p></div>
+<div class="edu"><div class="head">Анализ данных на Python</div><p>Pierian Data: от основ Python до машинного обучения.</p></div>
+<div class="qr"><a href="https://maarshir.github.io/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" class="segno"><path class="qrline" stroke="#2b2139" d="M0 0.5h7m1 0h1m4 0h4m1 0h1m1 0h1m1 0h7m-29 1h1m5 0h1m1 0h6m2 0h2m1 0h2m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h4m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m3 0h1m3 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h1m1 0h1m1 0h3m1 0h1m1 0h2m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h3m1 0h1m1 0h1m1 0h2m1 0h1m-19 1h2m1 0h1m1 0h2m1 0h2m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h5m-29 1h4m5 0h3m4 0h2m3 0h2m5 0h1m-26 1h2m1 0h2m2 0h2m1 0h1m1 0h4m4 0h3m1 0h2m-21 1h1m3 0h1m1 0h2m1 0h1m2 0h3m4 0h1m-27 1h1m1 0h4m1 0h1m2 0h1m5 0h1m1 0h2m1 0h2m-24 1h2m2 0h1m2 0h1m1 0h4m1 0h3m1 0h1m1 0h4m3 0h2m-26 1h7m5 0h1m1 0h1m4 0h2m2 0h3m-28 1h2m1 0h2m1 0h1m1 0h1m1 0h3m1 0h2m2 0h5m3 0h2m-28 1h3m1 0h2m1 0h2m1 0h1m1 0h1m1 0h1m3 0h2m1 0h2m1 0h1m1 0h1m-26 1h1m2 0h1m2 0h2m1 0h1m1 0h3m1 0h1m2 0h3m2 0h4m-29 1h1m1 0h1m1 0h4m1 0h1m2 0h1m1 0h1m2 0h2m2 0h1m2 0h5m-28 1h1m3 0h1m1 0h1m2 0h1m4 0h1m1 0h3m2 0h3m3 0h1m-29 1h1m2 0h9m5 0h1m1 0h7m-18 1h3m2 0h1m2 0h2m1 0h2m3 0h1m2 0h2m-29 1h7m1 0h2m3 0h2m3 0h3m1 0h1m1 0h1m1 0h1m1 0h1m-29 1h1m5 0h1m2 0h1m1 0h3m1 0h1m1 0h2m1 0h1m3 0h1m2 0h2m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h4m1 0h2m1 0h1m1 0h6m2 0h1m-29 1h1m1 0h3m1 0h1m3 0h1m2 0h1m1 0h2m1 0h1m1 0h2m2 0h1m-25 1h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h3m1 0h2m3 0h2m1 0h1m1 0h1m-29 1h1m5 0h1m1 0h1m2 0h2m3 0h2m1 0h2m1 0h2m3 0h1m-28 1h7m2 0h1m1 0h1m2 0h4m1 0h2m3 0h1m2 0h2"/></svg></a><p><b>Сайт-резюме</b>maarshir.github.io<br>Наведите камеру телефона, чтобы открыть.</p></div>
+</aside>
+</div>
 </body>
 </html>
