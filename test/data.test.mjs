@@ -12,7 +12,7 @@ test('данные сайта проходят проверку', async () => {
 
 // Код открыт только у этих репозиториев. Ссылка на закрытый вела бы гостя на 404,
 // поэтому у проекта с закрытым кодом code: null и на карточке нет кнопки «Код».
-const OPEN_REPOS = ['promptdiff-', 'doc-answers', 'token-counter', 'gost-skills'];
+const OPEN_REPOS = ['promptdiff-', 'doc-answers', 'token-counter', 'gost-skills', 'content-factory'];
 
 test('ссылки «Код» ведут только в открытые репозитории', async () => {
   for (const p of await load('projects.json')) {
@@ -26,7 +26,7 @@ test('проекты и порядок как на странице профил
   const projects = await load('projects.json');
   const by = (g) => projects.filter((p) => p.group === g).map((p) => p.id);
   assert.deepEqual(by('main'), ['promptdiff', 'doc-answers', 'gost-skills']);
-  assert.deepEqual(by('personal'), ['assistant', 'token-counter']);
+  assert.deepEqual(by('personal'), ['assistant', 'token-counter', 'content-factory']);
   const assistant = projects.find((p) => p.id === 'assistant');
   assert.equal(assistant.code, null);
   assert.equal(assistant.building, null);
