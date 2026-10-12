@@ -110,7 +110,7 @@ html.town-first, html.town-first body { overflow: hidden; height: 100%; }
 }
 .dlg-links { display: flex; flex-wrap: wrap; gap: 10px; }
 .dlg-close { background: var(--paper); color: var(--ink); font-size: 1.1rem; }
-.dlg-close:hover { color: var(--ink); }
+.dlg-close:hover, .dlg-close:focus-visible { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
   .town-hint { animation: none; }

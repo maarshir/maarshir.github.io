@@ -67,7 +67,9 @@ h3 { font-size: 1.5rem; margin: 0 0 0.4em; }
 p { margin: 0 0 0.8em; }
 
 a { color: inherit; text-decoration-color: var(--roof); text-decoration-thickness: 2px; text-underline-offset: 3px; }
-a:hover { color: var(--roof); }
+a:hover, a:focus-visible { color: var(--roof); }
+/* Рамка фокуса только при переходе с клавиатуры. У кнопок, подсказок и раскрывашек
+   фокус выглядит так же, как наведение мышью: test/a11y.test.mjs за этим следит. */
 :focus-visible { outline: var(--px) solid var(--focus); outline-offset: 2px; }
 
 .skip {
@@ -107,11 +109,11 @@ a:hover { color: var(--roof); }
   background: var(--gold); color: #2b2139; text-decoration: none; font-size: 1.25rem; line-height: 1.3;
   transition: transform 80ms steps(2), box-shadow 80ms steps(2);
 }
-.btn:hover { color: #2b2139; transform: translate(-2px, -2px); box-shadow: calc(var(--px) + 2px) calc(var(--px) + 2px) 0 var(--shadow); }
+.btn:hover, .btn:focus-visible { color: #2b2139; transform: translate(-2px, -2px); box-shadow: calc(var(--px) + 2px) calc(var(--px) + 2px) 0 var(--shadow); }
 .btn:active { transform: translate(var(--px), var(--px)); box-shadow: none; }
 /* Главная кнопка первого экрана заметнее остальных. */
 .btn-main { background: var(--roof); color: #fffaf0; }
-.btn-main:hover { color: #fffaf0; }
+.btn-main:hover, .btn-main:focus-visible { color: #fffaf0; }
 
 .section-title {
   display: inline-block; background: var(--roof); color: #fffaf0;
@@ -129,7 +131,7 @@ a:hover { color: var(--roof); }
 
 /* Подробности на карточке свёрнуты: список проектов читается с одного взгляда. */
 .more summary { cursor: pointer; color: var(--muted); font-size: 1.15rem; width: max-content; }
-.more summary:hover { color: var(--roof); }
+.more summary:hover, .more summary:focus-visible { color: var(--roof); }
 .more[open] summary { margin-bottom: 8px; }
 .more p { font-size: 0.95rem; }
 
@@ -187,7 +189,7 @@ html:not(.js) .ask { display: none; }
   font: 400 1.05rem/1.2 var(--font-pixel); color: var(--ink); background: var(--paper);
   border: 2px solid var(--ink); padding: 3px 8px; cursor: pointer;
 }
-.ask-chip:hover { background: var(--gold); color: #2b2139; }
+.ask-chip:hover, .ask-chip:focus-visible { background: var(--gold); color: #2b2139; }
 .ask-form { display: flex; gap: 8px; }
 .ask-form input {
   flex: 1; min-width: 0; font: inherit; font-size: 1rem; padding: 6px 10px;
@@ -221,7 +223,7 @@ html:not(.js) .ask { display: none; }
 
 /* В тёмной теме красный светлее, и белый текст на нём читается плохо: берём тёмный. */
 @media (prefers-color-scheme: dark) {
-  .btn-main, .btn-main:hover, .section-title { color: #2b2139; }
+  .btn-main, .btn-main:hover, .btn-main:focus-visible, .section-title { color: #2b2139; }
 }
 
 /* Пиксельная сцена первого экрана: время суток ставит js/live.mjs атрибутом data-phase,
