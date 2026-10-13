@@ -6,11 +6,11 @@
   --muted: #5e5470;      /* второстепенный текст */
   --grass: #5a9b4c;
   --grass-dark: #3f7338;
-  --roof: #c8553d;
+  --roof: #b0452e;       /* текст этого цвета на бумаге и в карточке держит 4.5:1 */
   --sky: #6fa8dc;
   --gold: #e8b04b;
   --wood: #8a5a3b;
-  --focus: #e8b04b;
+  --focus: #9c6a0b;      /* рамка фокуса на светлом фоне держит 3:1 */
   --shadow: #2b2139;
   --px: 4px;             /* размер «пикселя» у рамок и теней */
   --font-pixel: 'Tiny5', ui-monospace, monospace;
@@ -30,6 +30,7 @@
     --gold: #f0c265;
     --wood: #c08a62;
     --shadow: #0d0b14;
+    --focus: #e8b04b;
   }
 }
 

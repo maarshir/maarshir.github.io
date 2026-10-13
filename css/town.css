@@ -20,6 +20,7 @@ html.town-first, html.town-first body { overflow: hidden; height: 100%; }
   overflow: hidden;
   background: #2f5a2c;
 }
+.town { --focus: #e8b04b; }   /* фон городка тёмно-зелёный, на нём видна светлая рамка */
 .town canvas {
   display: block;
   image-rendering: pixelated;
