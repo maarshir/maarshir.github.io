@@ -45,19 +45,70 @@ function roomTone() {
   hum.connect(hg).connect(master); hum.start();
 }
 
+// Если файла с музыкой нет, играет тихий синтезированный фон: тёплые аккорды и треск пластинки
+let pad = null;
+function startPad() {
+  if (pad) return;
+  const out = ctx.createGain(); out.gain.value = 0;
+  out.gain.linearRampToValueAtTime(0.11, ctx.currentTime + 4);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+  const delay = ctx.createDelay(); delay.delayTime.value = 0.32;
+  const fb = ctx.createGain(); fb.gain.value = 0.28;
+  lp.connect(out); lp.connect(delay); delay.connect(fb).connect(delay); delay.connect(out);
+  out.connect(master);
+  const chords = [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]];
+  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  let bar = 0, stopped = false;
+  const playBar = () => {
+    if (stopped) return;
+    const t = ctx.currentTime + 0.05, ch = chords[bar % 4];
+    ch.forEach((m, i) => {
+      for (const [type, mul, g] of [['sine', 1, 0.16], ['triangle', 2, 0.03]]) {
+        const o = ctx.createOscillator(); o.type = type; o.frequency.value = hz(m) * mul; o.detune.value = (Math.random() - 0.5) * 8;
+        const e = ctx.createGain();
+        const start = t + i * 0.06;
+        e.gain.setValueAtTime(0, start); e.gain.linearRampToValueAtTime(g, start + 0.04); e.gain.exponentialRampToValueAtTime(0.0008, start + 3.6);
+        o.connect(e).connect(lp); o.start(start); o.stop(start + 3.8);
+      }
+    });
+    const b = ctx.createOscillator(); b.type = 'sine'; b.frequency.value = hz(ch[0] - 12);
+    const be = ctx.createGain(); be.gain.setValueAtTime(0, t); be.gain.linearRampToValueAtTime(0.18, t + 0.05); be.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
+    b.connect(be).connect(lp); b.start(t); b.stop(t + 2.5);
+    bar++;
+    pad.timer = setTimeout(playBar, 3600);
+  };
+  const crackle = ctx.createBufferSource();
+  const len = ctx.sampleRate * 3, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() < 0.0009 ? (Math.random() - 0.5) * 0.9 : (Math.random() - 0.5) * 0.012;
+  crackle.buffer = buf; crackle.loop = true;
+  const cg = ctx.createGain(); cg.gain.value = 0.25;
+  crackle.connect(cg).connect(out); crackle.start();
+  pad = { out, stop() { stopped = true; clearTimeout(pad.timer); out.gain.setTargetAtTime(0, ctx.currentTime, 0.4); setTimeout(() => crackle.stop(), 2000); } };
+  playBar();
+}
+let musicOn = false;
+export function toggleMusic() {
+  if (!ctx) return false;
+  musicOn = !musicOn;
+  click(ctx.currentTime, 0.35, 900, 0.04);
+  if (music) { musicOn ? music.play() : music.pause(); return musicOn; }
+  if (musicOn) startPad(); else if (pad) { pad.stop(); pad = null; }
+  return musicOn;
+}
+
 async function startMusic() {
   try {
     const res = await fetch('audio/music.mp3', { method: 'HEAD' });
-    if (!res.ok) return;
+    if (!res.ok) { musicOn = true; startPad(); return; }
     music = new Audio('audio/music.mp3');
     music.loop = true; music.volume = 0;
     const node = ctx.createMediaElementSource(music);
     node.connect(master);
-    await music.play();
+    await music.play(); musicOn = true;
     const t0 = performance.now();
     const fade = () => { const k = Math.min(1, (performance.now() - t0) / 4000); music.volume = 0.35 * k; if (k < 1) requestAnimationFrame(fade); };
     fade();
-  } catch { /* без музыки комната всё равно работает */ }
+  } catch { musicOn = true; startPad(); }
 }
 
 export function duckMusic(on) {
@@ -137,3 +188,5 @@ export function paperRustle() {
   const g = ctx.createGain(); env(g, t, 0.05, 0.4, 0.06);
   s.connect(bp).connect(g).connect(master); s.start(t);
 }
+
+export function switchClick() { if (ctx) { click(ctx.currentTime, 0.4, 1600, 0.03); click(ctx.currentTime + 0.05, 0.2, 900, 0.03); } }

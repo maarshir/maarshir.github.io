@@ -40,7 +40,7 @@ export function createScreen(projects) {
         vec2 c = vUv - 0.5;
         float r2 = dot(c, c);
         vec2 uv = 0.5 + c * (1.0 + 0.10 * r2);          // выпуклость кинескопа
-        vec3 glass = vec3(0.018, 0.024, 0.022) + vec3(0.02) * (0.5 - c.y);
+        vec3 glass = vec3(0.022, 0.028, 0.026) + vec3(0.025) * (0.5 - c.y) + vec3(0.02, 0.022, 0.02) * smoothstep(0.5, 0.0, length(c - vec2(-0.15, 0.2)));
         vec3 col = glass;
         if (uPower > 0.0) {
           float sx = smoothstep(0.0, 0.22, uPower);
@@ -53,11 +53,11 @@ export function createScreen(projects) {
           lit *= 0.9 + 0.1 * sin(uv.y * 960.0 * 3.14159);      // строки развёртки
           lit *= 0.985 + 0.015 * sin(uTime * 55.0);               // лёгкое мерцание
           float boost = 1.0 + 2.5 * (1.0 - smoothstep(0.15, 0.6, uPower));
+          lit *= smoothstep(0.8, 0.35, length(c * vec2(1.0, 1.2)));   // затемнение к краям у светящейся картинки
           col = mix(glass, lit * boost, inside);
         }
         float edge = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
         col *= edge;
-        col *= smoothstep(0.78, 0.32, length(c * vec2(1.0, 1.2)));          // затемнение к краям
         col += vec3(1.0, 0.82, 0.55) * 0.05 * smoothstep(0.3, 0.0, length(c - vec2(0.27, 0.3))); // блик лампы
         gl_FragColor = vec4(col, 1.0);
       }`,

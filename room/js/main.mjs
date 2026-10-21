@@ -5,23 +5,22 @@ import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { buildRoom, paintSky } from './objects.mjs';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { buildRoom, paintSky, TOP } from './objects.mjs';
 import { createScreen } from './screen.mjs';
 import * as sound from './audio.mjs';
 
-const TOP = 0.76;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const params = new URLSearchParams(location.search);
 const $ = (id) => document.getElementById(id);
 
 // Точки обзора: откуда смотрит камера, куда и какую ширину сцены нужно уместить
+// Камера стоит слева спереди и смотрит на стол под углом; остальные точки считаются по предметам после загрузки
 const VIEWS = {
-  home:     { pos: [0, 1.36, 1.62],         look: [0, 0.93, -0.2],          span: 1.9, portrait: 0.9 },
-  computer: { pos: [0, TOP + 0.335, 0.37], look: [0, TOP + 0.335, -0.05],  span: 0.4 },
-  diploma:  { pos: [-0.46, 1.32, 0.5],     look: [-0.57, 0.8, -0.08],      span: 0.7 },
-  phone:    { pos: [0.5, 1.2, 0.64],       look: [0.5, 0.79, 0.13],        span: 0.6 },
+  home: { pos: [-0.86, 1.42, 1.36], look: [0.02, 0.95, -0.25], span: 2.0, portrait: 0.95 },
 };
-const LABELS = { computer: 'Проекты', diploma: 'Учёба', phone: 'Контакты', lamp: 'Свет' };
+const LABELS = { computer: 'Проекты', diploma: 'Учёба', phone: 'Контакты', lamp: 'Свет', tape: 'Музыка' };
 const BASE_FOV = 36;
 
 const canvasEl = $('scene');
@@ -30,21 +29,44 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.15;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#0d0906');
-scene.fog = new THREE.Fog('#0d0906', 3.2, 7);
+scene.fog = new THREE.Fog('#0d0906', 3.5, 8);
 const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.02, 20);
 
-await Promise.all([document.fonts.load('40px Tiny5'), document.fonts.load('30px "Golos Text"')]).catch(() => {});
+await Promise.all([document.fonts.load('40px Tiny5'), document.fonts.load('30px "Golos Text"'), document.fonts.load('40px Caveat'), document.fonts.load('40px Caveat', 'Привет')]).catch(() => {});
 const projects = await fetch('../data/projects.json').then(r => r.json()).catch(() => []);
 
-const room = buildRoom(scene, { projects });
+// Загрузка моделей и текстур: процент на кнопке входа
+const manager = new THREE.LoadingManager();
+manager.onProgress = (_, done, total) => { const b = $('enter-btn'); if (b.disabled) b.textContent = `Загрузка ${Math.round(done / total * 100)}%`; };
+const pmrem = new THREE.PMREMGenerator(renderer);
+new RGBELoader(manager).load('hdri/fireplace.hdr', (hdr) => {
+  scene.environment = pmrem.fromEquirectangular(hdr).texture;
+  scene.environmentIntensity = 0.32;
+  hdr.dispose();
+});
+const room = await buildRoom(scene, manager, { projects });
 const screen = createScreen(projects);
 const screenMesh = new THREE.Mesh(room.screenGeo, screen.material);
-screenMesh.position.set(0, TOP + 0.335, -0.046);
-room.pick.computer.add(screenMesh);
+room.screenAt(screenMesh);
+scene.updateMatrixWorld(true);
+
+// Точка обзора перед предметом: отступ по нормали и немного сверху
+function viewFrom(obj, offset, normal, lift = 0, lookShift = [0, 0, 0], span = 0.5) {
+  const c = new THREE.Vector3(); obj.getWorldPosition(c);
+  c.add(new THREE.Vector3(...lookShift));
+  const n = normal.clone().normalize();
+  const pos = c.clone().addScaledVector(n, offset); pos.y += lift;
+  return { pos: pos.toArray(), look: c.toArray(), span };
+}
+const screenNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(screenMesh.getWorldQuaternion(new THREE.Quaternion()));
+VIEWS.computer = viewFrom(screenMesh, 0.44, screenNormal, 0.0, [0, 0, 0], 0.36);
+const frameNormal = new THREE.Vector3(1, 0, 0).applyQuaternion(room.frame.getWorldQuaternion(new THREE.Quaternion()));
+VIEWS.diploma = viewFrom(room.frame, 0.5, frameNormal, 0.12, [0.06, 0.15, 0.05], 0.55);
+VIEWS.phone = viewFrom(room.phone, 0.95, new THREE.Vector3(-0.15, 0, 1), 0.05, [0.12, 0.22, 0], 0.62);
 
 // Свет: небо, окно, свечение экрана
 const hemi = new THREE.HemisphereLight('#4a5878', '#2a1a0e', 0.45);
@@ -52,11 +74,11 @@ scene.add(hemi);
 const moon = new THREE.DirectionalLight('#8fa6d8', 0.6);
 moon.position.set(-0.8, 2.2, -0.2); moon.target.position.set(-0.3, TOP, 0.2);
 scene.add(moon, moon.target);
-const fill = new THREE.PointLight('#ffb070', 0.9, 1.6, 1.5);
-fill.position.set(-0.55, 1.35, 0.35);
+const fill = new THREE.PointLight('#ffb070', 0.35, 1.8, 1.5);
+fill.position.set(0.3, 1.4, 0.5);
 scene.add(fill);
-const screenLight = new THREE.PointLight('#9fd0ff', 0, 1.3, 2);
-screenLight.position.set(0, TOP + 0.33, 0.1);
+const screenLight = new THREE.PointLight('#9fd0ff', 0, 1.1, 2);
+screenMesh.getWorldPosition(screenLight.position).addScaledVector(screenNormal, 0.3);
 scene.add(screenLight);
 
 let phase = paintSky(room.sky, new Date().getHours());
@@ -66,6 +88,12 @@ if (phase === 'day' || phase === 'morning') { hemi.intensity = 0.7; moon.color.s
 // Постобработка: обводка, свечение, виньетка с зерном
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
+// мягкие тени в углах и под предметами; на телефоне выключены ради плавности
+const touch = matchMedia('(hover: none)').matches;
+const ao = new GTAOPass(scene, camera, 1, 1);
+ao.updateGtaoMaterial({ radius: 0.12, distanceExponent: 1.5, thickness: 1, scale: 1.2, samples: 12 });
+ao.blendIntensity = 0.85;
+if (!touch && !params.has('noao')) composer.addPass(ao);
 const outline = new OutlinePass(new THREE.Vector2(1, 1), scene, camera);
 Object.assign(outline, { edgeStrength: 2.4, edgeGlow: 0.0, edgeThickness: 1.2, pulsePeriod: 0 });
 outline.visibleEdgeColor.set('#ffd79a'); outline.hiddenEdgeColor.set('#2a1d0c');
@@ -175,33 +203,14 @@ function bootComputer() {
   setTimeout(next, reduce ? 0 : 1200);
 }
 
-// Звонок: трубка поднимается, диск крутится, гудки, трубку кладут, появляются контакты
+// Звонок: дисковый набор, гудки, сброс; телефон на стене чуть вздрагивает от звонка, потом появляются контакты
+let ringT = 0;
 function call() {
   if (state.calling) return;
   state.calling = true;
-  const hs = room.handset;
-  const base = hs.position.y;
-  liftHandset(base, base + 0.09, 0.4);
-  const dur = sound.phoneCall(() => {
-    liftHandset(base + 0.09, base, 0.3);
-    state.calling = false;
-    $('contacts').hidden = false;
-  });
-  if (!dur) { state.calling = false; liftHandset(base + 0.09, base, 0); $('contacts').hidden = false; }
-  dialSpin = dur ? performance.now() : 0;
-}
-let dialSpin = 0;
-let liftId = 0;
-function liftHandset(a, b, sec) {
-  const hs = room.handset, t0 = performance.now(), id = ++liftId;
-  const f = () => {
-    if (id !== liftId) return;
-    const k = sec ? Math.min(1, (performance.now() - t0) / (sec * 1000)) : 1;
-    hs.position.y = a + (b - a) * ease(k);
-    hs.rotation.z = (b > a ? k : 1 - k) * 0.25;
-    if (k < 1) requestAnimationFrame(f);
-  };
-  f();
+  ringT = performance.now();
+  const dur = sound.phoneCall(() => { state.calling = false; $('contacts').hidden = false; });
+  if (!dur) { state.calling = false; $('contacts').hidden = false; }
 }
 
 // Наведение и нажатие
@@ -253,6 +262,7 @@ canvasEl.addEventListener('click', (e) => {
   }
   const k = hitTest(e.clientX, e.clientY);
   if (k === 'lamp') { toggleLamp(); return; }
+  if (k === 'tape') { const on = sound.toggleMusic(); $('sr').textContent = on ? 'Музыка играет' : 'Музыка на паузе'; return; }
   if (k) go(k);
 });
 
@@ -271,7 +281,7 @@ function openProjectAt(x, y) {
 
 function toggleLamp() {
   state.lampOn = !state.lampOn;
-  sound.paperRustle();
+  sound.switchClick();
 }
 
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.view !== 'home') go('home'); });
@@ -331,7 +341,7 @@ function tick() {
   power.v = reduce ? power.target : power.v + (power.target - power.v) * Math.min(1, dt * 1.6);
   screen.material.uniforms.uPower.value = power.v > 0.995 ? 1 : power.v;
   screen.material.uniforms.uTime.value = t;
-  screenLight.intensity = power.v * 0.5;
+  screenLight.intensity = power.v * 0.35;
 
   // ветер: шторы, стикеры, кисточка шапочки
   const gust = 0.5 + 0.5 * Math.sin(t * 0.37) * Math.sin(t * 0.23 + 1);
@@ -339,12 +349,12 @@ function tick() {
     const p = c.geometry.attributes.position, b = c.userData.base;
     for (let i = 0; i < p.count; i++) {
       const x = b[i * 3], y = b[i * 3 + 1];
-      const down = (0.575 - y) / 1.15;
+      const down = (0.75 - y) / 1.5;
       p.setZ(i, Math.sin(x * 18 + t * 1.3) * 0.012 + down * down * gust * (0.03 + Math.sin(t * 1.7 + x * 6) * 0.015));
     }
     p.needsUpdate = true; c.geometry.computeVertexNormals();
   }
-  for (const s of room.anim.stickies) s.rotation.x = -0.05 - gust * 0.12 * (0.6 + 0.4 * Math.sin(t * 2.1 + s.userData.phase));
+  for (const s of room.anim.stickies) { const w = 0.6 + 0.4 * Math.sin(t * 2.1 + s.userData.phase); s.rotation.x = -0.015 - gust * 0.07 * w; s.rotation.z = s.userData.rot + Math.sin(t * 1.3 + s.userData.phase) * 0.01 * gust; }
   room.anim.tassel.rotation.x = Math.sin(t * 1.9) * 0.15 * (0.4 + gust);
 
   // пылинки
@@ -365,7 +375,10 @@ function tick() {
   }
 
   // диск телефона во время набора
-  if (dialSpin) room.anim.dial.rotation.y = Math.sin((performance.now() - dialSpin) / 1000 * 3) * 1.2 * (state.calling ? 1 : 0);
+  if (state.calling) {
+    const e = (performance.now() - ringT) / 1000;
+    room.phone.rotation.z = Math.sin(e * 55) * 0.006 * (Math.sin(e * 2.2) > 0.3 ? 1 : 0);
+  } else room.phone.rotation.z = 0;
 
   // камера: переезд, лёгкое дыхание и сдвиг за курсором
   if (tween) {

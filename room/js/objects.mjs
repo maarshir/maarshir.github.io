@@ -1,381 +1,418 @@
-// Комната целиком из простых фигур: стол, компьютер, лампа, диплом, телефон и мелочи.
+// Комната: модели с Poly Haven (свободная лицензия) и несколько предметов, собранных в коде.
 // Единицы в метрах, верх столешницы на высоте 0,76.
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { wood, plaster, cork, paper, soft, canvas, rng } from './textures.mjs';
+import { paper, soft, canvas, rng } from './textures.mjs';
 
-const TOP = 0.76;
+export const TOP = 0.76;
 
-function shadow(m) { m.castShadow = true; m.receiveShadow = true; return m; }
+const shadow = (m) => { m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return m; };
+function mesh(geo, mat, x = 0, y = 0, z = 0) { const m = shadow(new THREE.Mesh(geo, mat)); m.position.set(x, y, z); return m; }
+const rbox = (w, h, d, r, mat, x, y, z) => mesh(new RoundedBoxGeometry(w, h, d, 4, r), mat, x, y, z);
 
-function box(w, h, d, mat, x = 0, y = 0, z = 0) {
-  const m = shadow(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat));
-  m.position.set(x, y, z); return m;
-}
-function rbox(w, h, d, r, mat, x = 0, y = 0, z = 0) {
-  const m = shadow(new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, r), mat));
-  m.position.set(x, y, z); return m;
-}
-function cyl(rt, rb, h, mat, x = 0, y = 0, z = 0, seg = 24) {
-  const m = shadow(new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat));
-  m.position.set(x, y, z); return m;
-}
-function between(a, b, r, mat) {
-  const d = new THREE.Vector3().subVectors(b, a);
-  const m = shadow(new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 12), mat));
-  m.position.copy(a).addScaledVector(d, 0.5);
-  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize());
-  return m;
-}
-const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...o });
+export async function buildRoom(scene, manager, { projects }) {
+  const gltf = new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder);
+  const texLoader = new THREE.TextureLoader(manager);
+  const load = (id) => gltf.loadAsync(`models/${id}.glb`).then(g => shadow(g.scene));
 
-export function buildRoom(scene, { projects }) {
+  // PBR-материал из трёх карт: цвет, рельеф, затенение/шероховатость/металл
+  function pbr(name, repeat = [1, 1], extra = {}) {
+    const t = (s, srgb) => {
+      const x = texLoader.load(`tex/${name}_${s}.webp`);
+      x.wrapS = x.wrapT = THREE.RepeatWrapping; x.repeat.set(...repeat); x.anisotropy = 8;
+      if (srgb) x.colorSpace = THREE.SRGBColorSpace;
+      return x;
+    };
+    const arm = t('arm');
+    return new THREE.MeshStandardMaterial({ map: t('diff', true), normalMap: t('nor'), aoMap: arm, roughnessMap: arm, metalnessMap: arm, metalness: 1, ...extra });
+  }
+
   const M = {
-    desk: std('#ffffff', { map: wood('#7a4b2a', '#4a2c17', 3, [2, 1]), roughness: 0.55 }),
-    floor: std('#ffffff', { map: wood('#3d2618', '#22150c', 5, [6, 6]), roughness: 0.7 }),
-    wall: std('#ffffff', { map: plaster('#40382b'), roughness: 0.95 }),
-    beige: std('#d6c9a8', { roughness: 0.5 }),
-    beige2: std('#bfb291', { roughness: 0.55 }),
-    darkPlastic: std('#29282a', { roughness: 0.45 }),
-    lamp: std('#2c3a31', { metalness: 0.45, roughness: 0.4 }),
-    brass: std('#b8862b', { metalness: 0.8, roughness: 0.3 }),
-    red: std('#7d1f19', { roughness: 0.28 }),
-    cream: std('#efe6cf', { roughness: 0.4 }),
-    black: std('#141414', { roughness: 0.7 }),
-    frame: std('#5b3a22', { roughness: 0.6 }),
+    desk: pbr('desk', [1.6, 0.8], { envMapIntensity: 0.45 }),
+    deskEdge: pbr('darkwood', [2, 0.2]),
+    floor: pbr('floor', [3, 3]),
+    wall: pbr('wall', [2.5, 1.5], { color: '#c9b79a' }),
+    velvet: pbr('velvet', [2, 3], { color: '#4e1f19', side: THREE.DoubleSide }),
+    capCloth: pbr('velvet', [1, 1], { color: '#1a1a1c' }),
+    plastic: new THREE.MeshStandardMaterial({ color: '#d4cbb6', roughness: 0.48 }),
+    plastic2: new THREE.MeshStandardMaterial({ color: '#bdb39c', roughness: 0.55 }),
+    dark: new THREE.MeshStandardMaterial({ color: '#2a2826', roughness: 0.5 }),
+    brass: new THREE.MeshStandardMaterial({ color: '#c39a45', metalness: 1, roughness: 0.32 }),
+    frame: pbr('darkwood', [1, 1]),
   };
 
-  const out = { pick: {}, anim: {} };
+  const out = { pick: {}, anim: {}, focus: {} };
 
-  // Пол и стены
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), M.floor);
+  // Пол, стены, плинтус
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), M.floor);
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
-  const wall = new THREE.Mesh(new THREE.PlaneGeometry(8, 4), M.wall);
-  wall.position.set(0, 2, -0.6); wall.receiveShadow = true; scene.add(wall);
-  const side = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), M.wall);
-  side.rotation.y = -Math.PI / 2; side.position.set(1.7, 2, 1.4); side.receiveShadow = true; scene.add(side);
-  const plinth = box(8, 0.08, 0.02, M.frame, 0, 0.04, -0.59); scene.add(plinth);
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(6, 3.2), M.wall);
+  wall.position.set(0, 1.6, -0.6); wall.receiveShadow = true; scene.add(wall);
+  const side = new THREE.Mesh(new THREE.PlaneGeometry(3, 3.2), M.wall);
+  side.rotation.y = Math.PI / 2; side.position.set(-1.75, 1.6, 0.9); side.receiveShadow = true; scene.add(side);
+  scene.add(mesh(new THREE.BoxGeometry(6, 0.1, 0.02), M.frame, 0, 0.05, -0.59));
 
-  // Стол
+  // Стол: толстая столешница с тёмной кромкой и ящиками справа
   const desk = new THREE.Group();
-  desk.add(box(1.7, 0.05, 0.86, M.desk, 0, TOP - 0.025, -0.16));
-  for (const [x, z] of [[-0.8, 0.22], [0.8, 0.22], [-0.8, -0.54], [0.8, -0.54]]) desk.add(box(0.05, TOP - 0.05, 0.05, M.desk, x, (TOP - 0.05) / 2, z));
-  desk.add(box(0.42, 0.22, 0.72, M.desk, 0.56, TOP - 0.16, -0.17));
-  desk.add(box(0.36, 0.08, 0.01, M.frame, 0.56, TOP - 0.12, 0.195));
-  desk.add(box(0.08, 0.012, 0.012, M.brass, 0.56, TOP - 0.12, 0.205));
+  desk.add(rbox(1.62, 0.04, 0.8, 0.008, M.desk, 0, TOP - 0.02, -0.18));
+  desk.add(rbox(1.64, 0.025, 0.82, 0.006, M.deskEdge, 0, TOP - 0.05, -0.18));
+  for (const [x, z] of [[-0.76, 0.17], [-0.76, -0.53]]) desk.add(rbox(0.05, TOP - 0.06, 0.05, 0.01, M.deskEdge, x, (TOP - 0.06) / 2, z));
+  desk.add(rbox(0.45, TOP - 0.06, 0.74, 0.01, M.deskEdge, 0.58, (TOP - 0.06) / 2, -0.18));
+  for (let i = 0; i < 3; i++) {
+    const y = 0.16 + i * 0.2;
+    desk.add(rbox(0.41, 0.18, 0.02, 0.006, M.desk, 0.58, y, 0.195));
+    desk.add(rbox(0.1, 0.014, 0.02, 0.006, M.brass, 0.58, y + 0.03, 0.212));
+  }
   scene.add(desk);
 
-  // Компьютер
+  // Компьютер: системный блок, монитор-кинескоп, клавиатура, мышь
   const pc = new THREE.Group();
-  pc.add(rbox(0.5, 0.12, 0.42, 0.012, M.beige, 0, TOP + 0.06, -0.21));
-  pc.add(box(0.15, 0.012, 0.004, M.darkPlastic, 0.11, TOP + 0.065, 0.001));
-  pc.add(box(0.03, 0.02, 0.006, M.beige2, 0.2, TOP + 0.04, 0.0));
-  const led = box(0.012, 0.006, 0.004, new THREE.MeshStandardMaterial({ color: '#1a3a1a', emissive: '#30ff60', emissiveIntensity: 0 }), -0.19, TOP + 0.075, 0.001);
-  pc.add(led);
-  const power = box(0.03, 0.03, 0.01, M.red, -0.15, TOP + 0.045, 0.0); pc.add(power);
-  for (let i = 0; i < 6; i++) pc.add(box(0.06, 0.004, 0.003, M.beige2, -0.03 + i * 0.0, TOP + 0.03 + i * 0.008, 0.0));
-  pc.add(box(0.2, 0.02, 0.16, M.beige2, 0, TOP + 0.13, -0.22));
-  // корпус монитора: передняя часть и сужающийся «горб» сзади
-  pc.add(rbox(0.44, 0.37, 0.3, 0.02, M.beige, 0, TOP + 0.33, -0.2));
-  pc.add(rbox(0.34, 0.29, 0.16, 0.03, M.beige2, 0, TOP + 0.33, -0.39));
-  pc.add(box(0.37, 0.28, 0.006, std('#47423a'), 0, TOP + 0.335, -0.048));
-  for (let i = 0; i < 5; i++) pc.add(box(0.012, 0.004, 0.003, M.darkPlastic, 0.16 + i * 0.0, TOP + 0.175, -0.049));
-  pc.add(cyl(0.008, 0.008, 0.006, M.darkPlastic, 0.18, TOP + 0.17, -0.048).rotateX(Math.PI / 2));
+  pc.add(rbox(0.46, 0.1, 0.4, 0.01, M.plastic, 0, TOP + 0.05, -0.24));
+  pc.add(rbox(0.16, 0.012, 0.01, 0.003, M.dark, 0.11, TOP + 0.06, -0.04));
+  pc.add(rbox(0.03, 0.022, 0.012, 0.004, M.plastic2, 0.2, TOP + 0.035, -0.04));
+  const led = mesh(new THREE.BoxGeometry(0.01, 0.005, 0.004), new THREE.MeshStandardMaterial({ color: '#1a3a1a', emissive: '#40ff70', emissiveIntensity: 0 }), -0.19, TOP + 0.07, -0.038);
+  pc.add(led); out.led = led;
+  pc.add(rbox(0.035, 0.03, 0.012, 0.005, new THREE.MeshStandardMaterial({ color: '#8a2a20', roughness: 0.4 }), -0.15, TOP + 0.04, -0.04));
+  for (let i = 0; i < 7; i++) pc.add(mesh(new THREE.BoxGeometry(0.11, 0.003, 0.003), M.dark, -0.02, TOP + 0.025 + i * 0.008, -0.039));
 
-  // экран: плоскость, выгнутая к зрителю
-  const sg = new THREE.PlaneGeometry(0.34, 0.255, 32, 24);
+  const tv = await load('television_02');
+  tv.position.set(0, TOP + 0.1, -0.19);
+  pc.add(tv);
+  // экран: выгнутая плоскость поверх стекла модели
+  const sg = new THREE.PlaneGeometry(0.336, 0.252, 32, 24);
   const p = sg.attributes.position;
   for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i) / 0.17, y = p.getY(i) / 0.1275;
-    p.setZ(i, 0.018 * (1 - x * x * 0.6) * (1 - y * y * 0.6));
+    const x = p.getX(i) / 0.168, y = p.getY(i) / 0.126;
+    p.setZ(i, 0.018 * (1 - x * x * 0.75) * (1 - y * y * 0.75));
   }
   sg.computeVertexNormals();
   out.screenGeo = sg;
-  out.led = led;
+  out.screenAt = (screenMesh) => { screenMesh.position.set(0, 0.2575, 0.111); tv.add(screenMesh); };
 
-  // клавиатура и мышь
+  // клавиатура: корпус с наклоном и клавиши с закруглёнными краями
   const kb = new THREE.Group();
-  kb.add(rbox(0.46, 0.028, 0.16, 0.006, M.beige, 0, 0, 0));
-  const keyGeo = new RoundedBoxGeometry(0.021, 0.014, 0.021, 2, 0.003);
-  const keys = new THREE.InstancedMesh(keyGeo, std('#cfc3a3', { roughness: 0.5 }), 17 * 5);
+  kb.add(rbox(0.46, 0.026, 0.165, 0.008, M.plastic, 0, 0, 0));
+  const keyGeo = new RoundedBoxGeometry(0.0205, 0.012, 0.0205, 3, 0.0035);
+  const keys = new THREE.InstancedMesh(keyGeo, new THREE.MeshStandardMaterial({ color: '#d9d1bd', roughness: 0.45 }), 90);
   keys.castShadow = true; keys.receiveShadow = true;
-  const mtx = new THREE.Matrix4(); let k = 0;
+  const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+  let k = 0;
+  const rr = rng(8);
   for (let r = 0; r < 5; r++) for (let c = 0; c < 17; c++) {
-    const wide = r === 4 && c > 4 && c < 11;
-    mtx.makeScale(wide && c === 5 ? 6.2 : 1, 1, 1);
-    if (wide && c !== 5) mtx.makeScale(0.0001, 0.0001, 0.0001);
-    mtx.setPosition(-0.2 + c * 0.025 + (wide && c === 5 ? 0.0625 : 0), 0.019, -0.055 + r * 0.025);
+    if (r === 4 && c > 4 && c < 11) { if (c !== 5) continue; s.set(6.6, 1, 1); mtx.compose(new THREE.Vector3(-0.2 + 7.5 * 0.0245, 0.018, -0.055 + r * 0.025), q, s); }
+    else { s.set(1, 1, 1); mtx.compose(new THREE.Vector3(-0.196 + c * 0.0245, 0.018 + (rr() - 0.5) * 0.0006, -0.055 + r * 0.025), q, s); }
     keys.setMatrixAt(k++, mtx);
   }
+  keys.count = k;
   kb.add(keys);
-  kb.position.set(0, TOP + 0.014, 0.13); kb.rotation.x = 0.04;
+  kb.position.set(0.0, TOP + 0.014, 0.1); kb.rotation.set(0.05, 0.06, 0);
   pc.add(kb);
-  const mouse = rbox(0.06, 0.03, 0.1, 0.015, M.beige, 0.32, TOP + 0.015, 0.14);
+  const mouse = new THREE.Group();
+  const mg = new THREE.SphereGeometry(0.035, 24, 16); mg.scale(0.85, 0.42, 1.4);
+  mouse.add(mesh(mg, M.plastic, 0, 0.012, 0));
+  mouse.position.set(0.32, TOP, 0.12); mouse.rotation.y = -0.15;
   pc.add(mouse);
+  pc.rotation.y = 0.12;
   scene.add(pc);
   out.pick.computer = pc;
+  out.tv = tv;
 
-  // Лампа
-  const lamp = new THREE.Group();
-  const P0 = new THREE.Vector3(0.64, TOP + 0.03, -0.36);
-  const P1 = new THREE.Vector3(0.58, TOP + 0.44, -0.34);
-  const P2 = new THREE.Vector3(0.33, TOP + 0.56, -0.13);
-  const T = new THREE.Vector3(0.05, TOP, 0.06);
-  lamp.add(cyl(0.085, 0.095, 0.03, M.lamp, P0.x, TOP + 0.015, P0.z, 32));
-  lamp.add(between(P0, P1, 0.011, M.brass));
-  lamp.add(between(P1, P2, 0.011, M.brass));
-  const j1 = new THREE.Mesh(new THREE.SphereGeometry(0.02, 16, 12), M.lamp); j1.position.copy(P1); lamp.add(j1);
-  const dir = new THREE.Vector3().subVectors(T, P2).normalize();
-  const shade = shadow(new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.17, 32, 1, true), std('#2c3a31', { metalness: 0.4, roughness: 0.35, side: THREE.DoubleSide })));
-  shade.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().negate());
-  shade.position.copy(P2).addScaledVector(dir, 0.04);
-  lamp.add(shade);
-  const cap = cyl(0.03, 0.03, 0.04, M.lamp, 0, 0, 0); cap.quaternion.copy(shade.quaternion); cap.position.copy(P2).addScaledVector(dir, -0.045); lamp.add(cap);
-  const bulbMat = new THREE.MeshStandardMaterial({ color: '#fff3d6', emissive: '#ffcf86', emissiveIntensity: 0 });
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.032, 20, 16), bulbMat);
-  bulb.position.copy(P2).addScaledVector(dir, 0.07); lamp.add(bulb);
-  const spot = new THREE.SpotLight('#ffc77a', 0, 3, 0.85, 0.65, 1.6);
-  spot.position.copy(bulb.position); spot.target.position.copy(T);
-  spot.castShadow = true; spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.015;
-  spot.shadow.camera.near = 0.05; spot.shadow.camera.far = 3;
-  lamp.add(spot, spot.target);
-  const glow = new THREE.PointLight('#ffb866', 0, 1.6, 1.8);
-  glow.position.copy(bulb.position).addScaledVector(dir, -0.03); lamp.add(glow);
-  scene.add(lamp);
-  out.lamp = { spot, glow, bulbMat, beam: { from: bulb.position.clone(), to: T.clone() } };
-  out.pick.lamp = lamp;
-
-  // Кружка с паром
-  const mug = new THREE.Group();
-  mug.add(cyl(0.04, 0.036, 0.1, std('#b0452e', { roughness: 0.3 }), 0, 0.05, 0, 32));
-  const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.036, 24), std('#2a1609', { roughness: 0.15 }));
-  coffee.rotation.x = -Math.PI / 2; coffee.position.y = 0.088; mug.add(coffee);
-  const handle = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.007, 10, 20, Math.PI * 1.2), std('#b0452e', { roughness: 0.3 })));
-  handle.rotation.z = -Math.PI * 0.6; handle.position.set(0.042, 0.05, 0); mug.add(handle);
-  mug.position.set(0.28, TOP, -0.03); mug.rotation.y = 0.6;
-  scene.add(mug);
-  out.steamFrom = new THREE.Vector3(0.28, TOP + 0.1, -0.03);
-
-  // Стакан с карандашами и дискеты
-  scene.add(cyl(0.035, 0.032, 0.1, std('#4a5a6a', { metalness: 0.5, roughness: 0.4 }), -0.34, TOP + 0.05, -0.36));
-  const r = rng(4);
-  for (let i = 0; i < 6; i++) {
-    const pen = cyl(0.004, 0.004, 0.16, std(['#e8b04b', '#b0452e', '#2b5d8a', '#3f7338', '#1a1a1a', '#e8b04b'][i]), -0.34 + (r() - .5) * 0.04, TOP + 0.12, -0.36 + (r() - .5) * 0.04, 6);
-    pen.rotation.set((r() - .5) * 0.4, 0, (r() - .5) * 0.4); scene.add(pen);
-  }
-  for (let i = 0; i < 3; i++) {
-    const d = box(0.09, 0.003, 0.094, std(['#23336e', '#1a1a1a', '#7d1f19'][i], { roughness: 0.35 }), -0.31 + i * 0.01, TOP + 0.002 + i * 0.0032, 0.2 - i * 0.008);
-    d.rotation.y = 0.3 - i * 0.25; scene.add(d);
-  }
-
-  // Учёба: раскрытый диплом, стопка книг и шапочка
-  const edu = new THREE.Group();
-  const coverMat = std('#4a1616', { roughness: 0.5 });
-  const leftPage = paper(512, 700, [
-    { text: 'ДИПЛОМ', size: 64, bold: true, align: 'center', color: '#7a5a14', gap: 150 },
-    { text: 'бакалавра', size: 40, align: 'center', color: '#7a5a14', gap: 20 },
-    { text: 'Капустин', size: 38, align: 'center', gap: 120 },
-    { text: 'Иван Сергеевич', size: 38, align: 'center', gap: 10 },
-  ], { bg: '#efe3c3' });
-  const rightPage = paper(512, 700, [
-    { text: 'РТУ МИРЭА', size: 46, bold: true, gap: 20 },
-    { text: '2022–2026', size: 30, color: '#6a5a3a', gap: 12 },
-    { text: '09.03.02 Информационные системы и технологии', size: 30, gap: 40 },
-    { text: 'Профиль: фулстек-разработка', size: 30, gap: 24 },
-    { text: 'Выпускная работа: мобильное приложение для задач и напоминаний', size: 30, gap: 24 },
-    { text: 'Сейчас: магистратура РТУ МИРЭА и Школа 21', size: 30, gap: 40, color: '#7d1f19' },
-  ], { bg: '#efe3c3', pad: 44 });
-  const pageGeo = new THREE.PlaneGeometry(0.19, 0.26);
-  [[-1, leftPage], [1, rightPage]].forEach(([s, map]) => {
-    const half = new THREE.Group();
-    half.add(box(0.205, 0.006, 0.275, coverMat, 0, 0, 0));
-    const pg = new THREE.Mesh(pageGeo, std('#ffffff', { map, roughness: 0.85 }));
-    pg.rotation.x = -Math.PI / 2; pg.position.y = 0.0042; pg.receiveShadow = true; half.add(pg);
-    half.position.set(s * 0.104, 0.008, 0); half.rotation.z = -s * 0.07;
-    edu.add(half);
+  // Лампа на струбцине у задней кромки, плафон над клавиатурой
+  const lamp = await load('desk_lamp_arm_01');
+  // струбцина у задней кромки, рычаг тянется к центру стола
+  lamp.position.set(-0.37, TOP, -0.31);
+  lamp.rotation.y = -2.5;
+  lamp.traverse(o => {
+    if (!o.isMesh) return;
+    if (o.material.name.includes('light')) { o.material = o.material.clone(); o.material.emissive = new THREE.Color('#ffd49a'); o.material.emissiveIntensity = 0; out.bulbMat = o.material; o.castShadow = false; }
+    else { o.material.color.multiplyScalar(0.55); }
   });
-  edu.position.set(-0.56, TOP, 0.06); edu.rotation.y = 0.22;
-  out.diplomaPages = edu;
+  scene.add(lamp);
+  lamp.updateMatrixWorld(true);
+  const bulbPos = new THREE.Vector3(-0.0045, 0.69, -0.17).applyMatrix4(lamp.matrixWorld);
+  const target = new THREE.Vector3(-0.05, TOP, 0.06);
+  const spot = new THREE.SpotLight('#ffc27a', 0, 3, 0.95, 0.75, 1.5);
+  spot.position.copy(bulbPos).add(new THREE.Vector3(0, -0.02, 0));
+  spot.target.position.copy(target);
+  spot.castShadow = true; spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0003; spot.shadow.normalBias = 0.01; spot.shadow.radius = 4;
+  spot.shadow.camera.near = 0.05; spot.shadow.camera.far = 3;
+  const glow = new THREE.PointLight('#ffb560', 0, 1.4, 1.6);
+  glow.position.copy(bulbPos).add(new THREE.Vector3(0, 0.03, 0));
+  scene.add(spot, spot.target, glow);
+  out.lamp = { spot, glow, bulbMat: out.bulbMat };
+  out.pick.lamp = lamp;
+  out.beam = { from: bulbPos.clone(), to: target.clone() };
 
-  const books = new THREE.Group();
-  books.add(box(0.27, 0.05, 0.2, std('#23336e'), 0, 0.025, 0));
-  books.add(box(0.25, 0.045, 0.19, std('#3f5a34'), 0.01, 0.0725, 0.005).rotateY(0.08));
-  books.add(box(0.255, 0.04, 0.012, std('#efe6cf', { roughness: 0.9 }), 0, 0.025, 0.1));
-  const hat = new THREE.Group();
-  hat.add(cyl(0.085, 0.09, 0.065, M.black, 0, 0.0325, 0, 32));
-  const board = box(0.26, 0.008, 0.26, M.black, 0, 0.068, 0); board.rotation.y = Math.PI / 4; hat.add(board);
-  hat.add(cyl(0.012, 0.012, 0.008, std('#b8862b', { metalness: 0.6 }), 0, 0.076, 0));
-  const tassel = new THREE.Group();
-  tassel.position.set(0, 0.076, 0);
-  const string = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.16, 6), std('#d4a33a'));
-  string.rotation.z = Math.PI / 2; string.position.x = 0.08; tassel.add(string);
-  const hang = new THREE.Group(); hang.position.x = 0.16; tassel.add(hang);
-  const fringe = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.012, 0.07, 10), std('#d4a33a', { roughness: 0.8 })));
-  fringe.position.y = -0.04; hang.add(fringe);
-  hat.add(tassel);
-  hat.position.set(0, 0.095, 0); hat.rotation.set(0.05, 0.4, -0.04);
-  books.add(hat);
-  books.position.set(-0.6, TOP, -0.3); books.rotation.y = 0.35;
-  const eduAll = new THREE.Group(); eduAll.add(edu, books); scene.add(eduAll);
-  out.pick.diploma = eduAll;
+  // Учёба: диплом в рамке, книги, квадратная шапочка
+  const edu = new THREE.Group();
+  const frame = await load('standing_picture_frame_02');
+  const diplomaTex = paper(600, 840, [
+    { text: 'ДИПЛОМ', size: 60, bold: true, align: 'center', color: '#6b4a10', gap: 110 },
+    { text: 'бакалавра', size: 38, align: 'center', color: '#6b4a10', gap: 14 },
+    { text: 'Капустин Иван Сергеевич', size: 30, align: 'center', gap: 70 },
+    { text: 'РТУ МИРЭА, 2022–2026', size: 30, align: 'center', gap: 60 },
+    { text: '09.03.02 Информационные системы и технологии', size: 26, align: 'center', gap: 26 },
+    { text: 'Профиль: фулстек-разработка', size: 26, align: 'center', gap: 20 },
+    { text: 'Выпускная работа: мобильное приложение для задач и напоминаний', size: 25, align: 'center', gap: 40 },
+  ], { bg: '#f1e6c8', pad: 96 });
+  diplomaTex.flipY = false;
+  frame.traverse(o => {
+    if (!o.isMesh) return;
+    if (o.material.name.includes('artwork')) o.material = new THREE.MeshStandardMaterial({ map: diplomaTex, roughness: 0.85 });
+    else if (o.material.name.includes('glass')) { o.material = new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.04, transparent: true, opacity: 0.12, envMapIntensity: 2 }); o.castShadow = false; }
+  });
+  frame.scale.setScalar(1.25);
+  frame.position.set(-0.6, TOP, -0.12); frame.rotation.y = -1.25;
+  edu.add(frame);
+  out.frame = frame;
+
+  const books = await load('book_encyclopedia_set_01');
+  const keep = new Set(['01', '02', '03', '04', '05', '06', '07']);
+  books.traverse(o => { if (o.name.startsWith('book_encyclopedia_set_01_book') && !keep.has(o.name.slice(-2))) o.visible = false; });
+  books.position.set(-0.74, TOP, -0.5); books.rotation.y = 0.18;
+  edu.add(books);
+
+  const cap = new THREE.Group();
+  cap.add(mesh(new THREE.CylinderGeometry(0.088, 0.094, 0.07, 40, 1, true), M.capCloth, 0, 0.035, 0));
+  cap.add(mesh(new THREE.CylinderGeometry(0.088, 0.088, 0.004, 40), M.capCloth, 0, 0.07, 0));
+  const board = rbox(0.25, 0.008, 0.25, 0.002, M.capCloth, 0, 0.074, 0); board.rotation.y = 0.3; cap.add(board);
+  cap.add(mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.008, 16), M.brass, 0, 0.081, 0));
+  const tassel = new THREE.Group(); tassel.position.set(0, 0.081, 0); tassel.rotation.y = 0.9;
+  const cord = mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.155, 6), new THREE.MeshStandardMaterial({ color: '#d8a83c', roughness: 0.6 }), 0.078, 0, 0);
+  cord.rotation.z = Math.PI / 2; tassel.add(cord);
+  const hang = new THREE.Group(); hang.position.x = 0.155; tassel.add(hang);
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * Math.PI * 2;
+    const st = mesh(new THREE.CylinderGeometry(0.0012, 0.0012, 0.075, 4), new THREE.MeshStandardMaterial({ color: '#d8a83c', roughness: 0.7 }), Math.cos(a) * 0.005, -0.045, Math.sin(a) * 0.005);
+    hang.add(st);
+  }
+  hang.add(mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.012, 10), M.brass, 0, -0.006, 0));
+  tassel.add(hang);
+  cap.add(tassel);
+  cap.position.set(-0.4, TOP, -0.32); cap.rotation.set(0.0, 0.5, 0.0);
+  edu.add(cap);
+  scene.add(edu);
+  out.pick.diploma = edu;
   out.anim.tassel = hang;
 
-  // Телефон и записка с контактами
-  const phone = new THREE.Group();
-  phone.add(rbox(0.2, 0.06, 0.22, 0.02, M.red, 0, 0.03, 0));
-  const top = rbox(0.17, 0.05, 0.15, 0.02, M.red, 0, 0.07, 0.02); top.rotation.x = -0.28; phone.add(top);
-  const dial = new THREE.Group();
-  dial.add(cyl(0.062, 0.062, 0.008, M.cream, 0, 0, 0, 40));
-  const wheel = cyl(0.058, 0.058, 0.005, std('#e8e2d2', { metalness: 0.2, roughness: 0.25, transparent: true, opacity: 0.55 }), 0, 0.007, 0, 40);
-  dial.add(wheel);
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI * 0.25 + i * (Math.PI * 1.45 / 9);
-    dial.add(cyl(0.008, 0.008, 0.012, std('#7d1f19'), Math.cos(a) * 0.043, 0.004, Math.sin(a) * 0.043, 12));
-  }
-  dial.add(cyl(0.018, 0.018, 0.012, M.cream, 0, 0.006, 0, 24));
-  dial.add(box(0.006, 0.006, 0.03, M.brass, 0.05, 0.012, 0.03));
-  dial.position.set(0, 0.098, 0.045); dial.rotation.x = -0.28;
-  phone.add(dial);
-  out.anim.dial = wheel;
-  // трубка на рычагах
-  const handset = new THREE.Group();
-  handset.add(between(new THREE.Vector3(-0.09, 0, 0), new THREE.Vector3(0.09, 0, 0), 0.016, M.red));
-  handset.add(rbox(0.06, 0.045, 0.07, 0.02, M.red, -0.1, -0.015, 0));
-  handset.add(rbox(0.06, 0.045, 0.07, 0.02, M.red, 0.1, -0.015, 0));
-  handset.position.set(0, 0.125, -0.06);
-  phone.add(handset);
-  phone.add(box(0.02, 0.03, 0.03, M.red, -0.065, 0.1, -0.06));
-  phone.add(box(0.02, 0.03, 0.03, M.red, 0.065, 0.1, -0.06));
-  // витой шнур
-  const pts = [];
-  for (let i = 0; i <= 120; i++) {
-    const t = i / 120;
-    const base = new THREE.Vector3(-0.1 - t * 0.08, 0.03 - Math.sin(t * Math.PI) * 0.02 - t * 0.02, -0.06 + t * 0.12);
-    const a = t * Math.PI * 2 * 18;
-    pts.push(base.add(new THREE.Vector3(0, Math.cos(a) * 0.008, Math.sin(a) * 0.008)));
-  }
-  const cord = shadow(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 400, 0.0025, 6), M.red));
-  cord.position.y = 0; phone.add(cord);
-  phone.position.set(0.6, TOP, 0.08); phone.rotation.y = -0.45;
-  out.handset = handset;
+  // Настенный телефон и записка с контактами
+  const phoneG = new THREE.Group();
+  const phone = await load('vintage_telephone_wall_clock');
+  phone.position.set(0.62, 1.05, -0.6);
+  phoneG.add(phone);
+  out.phone = phone;
+  const contactNote = sticky('#f7e27e', [
+    { t: 'Иван Капустин', s: 46 },
+    { t: 'тг @kaioann', s: 50 },
+    { t: 'ivan_ius@mail.ru', s: 44 },
+    { t: 'гитхаб: maarshir', s: 44 },
+  ], 0.11, 3);
+  contactNote.position.set(0.88, 1.3, -0.597); contactNote.rotation.z = -0.07;
+  phoneG.add(contactNote);
+  const sconce = new THREE.PointLight('#ffb36b', 0.35, 1.3, 1.6);
+  sconce.position.set(0.72, 1.55, -0.25); phoneG.add(sconce);
+  scene.add(phoneG);
+  out.pick.phone = phoneG;
 
-  const noteTex = paper(520, 380, [
-    { text: 'Иван Капустин', size: 40, bold: true, gap: 4 },
-    { text: 'Телеграм: @kaioann', size: 34, gap: 22, bold: true },
-    { text: 'Почта: ivan_ius@mail.ru', size: 34, gap: 14, bold: true },
-    { text: 'Гитхаб: maarshir', size: 34, gap: 14, bold: true },
-  ], { bg: '#f7e48a', pad: 36, lined: false });
-  const note = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.11), std('#ffffff', { map: noteTex, roughness: 0.9 }));
-  note.rotation.x = -Math.PI / 2; note.rotation.z = 0.25; note.position.set(0.4, TOP + 0.001, 0.23); note.receiveShadow = true;
-  const phoneAll = new THREE.Group(); phoneAll.add(phone, note); scene.add(phoneAll);
-  out.pick.phone = phoneAll;
+  // Чайная пара, карандаши, растение, кассетник, бумаги, очки
+  const tea = await load('tea_set_01');
+  const cup = new THREE.Group();
+  for (const n of ['tea_set_01_cup_small_01', 'tea_set_01_saucer_circular_04']) {
+    const o = tea.getObjectByName(n); const c = o.clone(); c.position.set(0, 0, 0); cup.add(c);
+  }
+  cup.getObjectByName('tea_set_01_cup_small_01').position.set(0, 0.012, 0.0);
+  cup.getObjectByName('tea_set_01_saucer_circular_04').position.set(-0.0, 0, -0.0);
+  // у модели точка отсчёта смещена, выровняем по рамке
+  cup.children.forEach(o => { o.geometry.computeBoundingBox(); const c = o.geometry.boundingBox.getCenter(new THREE.Vector3()); o.position.x -= c.x; o.position.z -= c.z; });
+  cup.position.set(0.34, TOP, -0.02); cup.rotation.y = 0.5;
+  scene.add(cup);
+  out.steamFrom = new THREE.Vector3(0.34, TOP + 0.085, -0.02);
+  // в чашке чай
+  const teaSurface = new THREE.Mesh(new THREE.CircleGeometry(0.036, 24), new THREE.MeshStandardMaterial({ color: '#4a2410', roughness: 0.08 }));
+  teaSurface.rotation.x = -Math.PI / 2; teaSurface.position.set(0.34, TOP + 0.067, -0.02); scene.add(teaSurface);
 
-  // Окно на задней стене
+  const st = await load('stationery_supplies');
+  const pencilCup = st.getObjectByName('stationery_supplies_pencilcup');
+  const holder = new THREE.Group();
+  const pc0 = pencilCup.clone(); pc0.position.set(0, 0, 0); pc0.rotation.set(0, 0, 0); holder.add(pc0);
+  holder.updateMatrixWorld(true);
+  let ci = 0;
+  for (const n of ['stationery_supplies_pencil_new_a', 'stationery_supplies_pen_blue', 'stationery_supplies_pencil_used', 'stationery_supplies_pen_fancy']) {
+    const o = st.getObjectByName(n).clone();
+    o.position.set(0, 0, 0); o.rotation.set(0, 0, 0);
+    o.geometry.computeBoundingBox();
+    const bb = o.geometry.boundingBox, len = bb.max.x - bb.min.x;
+    const g = new THREE.Group(); g.add(o);
+    o.position.x = -(bb.min.x + bb.max.x) / 2;
+    g.rotation.z = Math.PI / 2 + (ci - 1.5) * 0.12; g.rotation.y = ci * 1.3;
+    g.position.set((ci % 2 - 0.5) * 0.02, len / 2 + 0.01, (ci > 1 ? 0.01 : -0.01));
+    holder.add(g); ci++;
+  }
+  holder.position.set(0.27, TOP, -0.44);
+  scene.add(holder);
+  const pen = st.getObjectByName('stationery_supplies_pen_red').clone();
+  pen.position.set(-0.24, TOP + 0.012, 0.16); pen.rotation.set(0, -0.6, 0); scene.add(pen);
+
+  const plant = await load('potted_plant_04');
+  plant.position.set(0.66, TOP, -0.42); plant.rotation.y = 1.2; scene.add(plant);
+
+  const tape = await load('cassette_player');
+  tape.position.set(0.6, TOP, -0.12); tape.rotation.y = -0.55; scene.add(tape);
+  out.pick.tape = tape;
+
+  const notes = await load('office_notepads');
+  const stack = notes.getObjectByName('office_notepads_a4_stack').clone();
+  stack.position.set(-0.32, TOP + 0.001, 0.14); stack.rotation.y = 0.22;
+  stack.geometry.computeBoundingBox(); const sc = stack.geometry.boundingBox.getCenter(new THREE.Vector3());
+  const stackG = new THREE.Group(); stack.position.set(-sc.x, 0, -sc.z); stackG.add(stack);
+  stackG.position.set(-0.33, TOP + 0.001, 0.12); stackG.rotation.y = 0.25; scene.add(stackG);
+  const pad = notes.getObjectByName('office_notepads_yellow_pad').clone();
+  pad.geometry.computeBoundingBox(); const pcn = pad.geometry.boundingBox.getCenter(new THREE.Vector3());
+  const padG = new THREE.Group(); pad.position.set(-pcn.x, 0, -pcn.z); padG.add(pad);
+  padG.position.set(0.48, TOP + 0.001, 0.16); padG.rotation.y = -0.4; padG.scale.setScalar(0.8); scene.add(padG);
+
+  const glasses = await load('round_spectacles');
+  glasses.position.set(-0.3, TOP + 0.012, 0.1); glasses.rotation.y = 0.9; scene.add(glasses);
+
+  // Стикеры: на мониторе и на стене, вразнобой, с загнутыми краями
+  const r = rng(31);
+  const wallNotes = [
+    ['#f7e27e', [{ t: 'Питон', s: 64 }, { t: 'FastAPI', s: 48 }], -0.42, 1.52, 0.11],
+    ['#f6b7a8', [{ t: 'n8n', s: 70 }, { t: 'конвейеры', s: 40 }], -0.25, 1.42, -0.09],
+    ['#a9dbe8', [{ t: 'RAG', s: 70 }, { t: 'BM25', s: 46 }], -0.08, 1.58, 0.06],
+    ['#bfe39f', [{ t: 'боты', s: 64 }, { t: 'в Телеграме', s: 38 }], 0.13, 1.47, -0.12],
+    ['#f7e27e', [{ t: 'Docker', s: 56 }, { t: 'Linux', s: 46 }], 0.3, 1.6, 0.08],
+    ['#f6b7a8', [{ t: 'не забыть:', s: 40 }, { t: 'стажировка!', s: 42 }], 0.36, 1.36, -0.05],
+  ];
+  out.anim.stickies = [];
+  wallNotes.forEach(([c, lines, x, y, rot], i) => {
+    const n = sticky(c, lines, 0.082 + r() * 0.01, i + 40);
+    n.position.set(x, y, -0.597); n.rotation.z = rot;
+    n.userData.phase = r() * 6; n.userData.rot = rot;
+    scene.add(n); out.anim.stickies.push(n);
+  });
+  const monNotes = [
+    ['#f7e27e', [{ t: 'Ctrl+S', s: 52 }, { t: 'всегда', s: 40 }], -0.19, 0.432, 0.22],
+    ['#a9dbe8', [{ t: 'коммит', s: 46 }, { t: 'до ночи', s: 40 }], 0.2, 0.36, -0.16],
+  ];
+  monNotes.forEach(([c, lines, x, y, rot], i) => {
+    const n = sticky(c, lines, 0.066, i + 90);
+    n.position.set(x, y, 0.124); n.rotation.z = rot;
+    n.userData.phase = r() * 6; n.userData.rot = rot;
+    tv.add(n); out.anim.stickies.push(n);
+  });
+
+  // Окно слева на задней стене, шторы колышутся
   const win = new THREE.Group();
-  const [sc, sg2] = canvas(512, 512);
-  const skyTex = new THREE.CanvasTexture(sc); skyTex.colorSpace = THREE.SRGBColorSpace;
-  const sky = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.74), new THREE.MeshBasicMaterial({ map: skyTex }));
-  win.add(sky);
-  const fw = 0.05;
-  win.add(box(0.96, fw, 0.06, M.frame, 0, 0.395, 0.01), box(0.96, fw, 0.06, M.frame, 0, -0.395, 0.01));
-  win.add(box(fw, 0.84, 0.06, M.frame, -0.455, 0, 0.01), box(fw, 0.84, 0.06, M.frame, 0.455, 0, 0.01));
-  win.add(box(0.025, 0.74, 0.04, M.frame, 0, 0, 0.01), box(0.86, 0.025, 0.04, M.frame, 0, 0.06, 0.01));
-  win.add(box(1.06, 0.03, 0.14, M.frame, 0, -0.43, 0.05));
-  win.position.set(-0.78, 1.62, -0.595);
+  const [scv, sgx] = canvas(1024, 768);
+  const skyTex = new THREE.CanvasTexture(scv); skyTex.colorSpace = THREE.SRGBColorSpace;
+  win.add(new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.9), new THREE.MeshBasicMaterial({ map: skyTex })));
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.9), new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.05, metalness: 0, transmission: 0, transparent: true, opacity: 0.08, envMapIntensity: 1.5 }));
+  glass.position.z = 0.012; win.add(glass);
+  const fw = 0.045;
+  for (const [w, h, x, y] of [[0.95, fw, 0, 0.47], [0.95, fw, 0, -0.47], [fw, 0.98, -0.45, 0], [fw, 0.98, 0.45, 0], [0.024, 0.9, 0, 0], [0.86, 0.024, 0, 0.12]]) win.add(rbox(w, h, 0.05, 0.006, M.frame, x, y, 0.02));
+  win.add(rbox(1.08, 0.03, 0.16, 0.008, M.frame, 0, -0.5, 0.06));
+  win.position.set(-1.0, 1.62, -0.595);
   scene.add(win);
-  out.sky = { canvas: sc, g: sg2, tex: skyTex };
+  out.sky = { canvas: scv, g: sgx, tex: skyTex };
 
-  // Шторы колышутся от сквозняка
   const curtains = [];
-  for (const x of [-1.33, -0.2]) {
-    const geo = new THREE.PlaneGeometry(0.34, 1.15, 10, 24);
-    const mat = std('#6e3324', { roughness: 0.9, side: THREE.DoubleSide });
-    const c = new THREE.Mesh(geo, mat); c.castShadow = true; c.receiveShadow = true;
-    c.position.set(x, 1.55, -0.54);
+  for (const x of [-1.56, -0.42]) {
+    const geo = new THREE.PlaneGeometry(0.36, 1.5, 14, 30);
+    const c = new THREE.Mesh(geo, M.velvet); c.castShadow = true; c.receiveShadow = true;
+    c.position.set(x, 1.45, -0.53);
     c.userData.base = Float32Array.from(geo.attributes.position.array);
     curtains.push(c); scene.add(c);
   }
-  scene.add(box(1.5, 0.018, 0.018, M.brass, -0.77, 2.13, -0.54));
+  scene.add(mesh(new THREE.CylinderGeometry(0.01, 0.01, 1.5, 12), M.brass, -0.99, 2.22, -0.53).rotateZ(Math.PI / 2));
   out.anim.curtains = curtains;
 
-  // Пробковая доска со стикерами
-  const boardG = new THREE.Group();
-  boardG.add(box(0.62, 0.44, 0.015, std('#ffffff', { map: cork(), roughness: 0.95 }), 0, 0, 0));
-  boardG.add(box(0.66, 0.025, 0.03, M.frame, 0, 0.23, 0.005), box(0.66, 0.025, 0.03, M.frame, 0, -0.23, 0.005));
-  boardG.add(box(0.025, 0.48, 0.03, M.frame, -0.32, 0, 0.005), box(0.025, 0.48, 0.03, M.frame, 0.32, 0, 0.005));
-  const stickies = [];
-  const words = [['Питон', '#f7e48a'], ['n8n', '#9fd3e8'], ['Боты', '#f5b7a6'], ['RAG', '#b9e09a'], ['FastAPI', '#f7e48a'], ['Docker', '#f5b7a6']];
-  words.forEach(([w, bg], i) => {
-    const t = paper(200, 200, [{ text: w, size: 44, align: 'center', gap: 70, font: 'Tiny5' }], { bg, pad: 10 });
-    const pin = new THREE.Group();
-    pin.position.set(-0.22 + (i % 3) * 0.2, 0.14 - Math.floor(i / 3) * 0.2, 0.012);
-    const s = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.11), std('#ffffff', { map: t, roughness: 0.9, side: THREE.DoubleSide }));
-    s.position.y = -0.05; s.castShadow = true; s.receiveShadow = true; pin.add(s);
-    pin.add(cyl(0.007, 0.007, 0.01, std(['#b0452e', '#2b5d8a', '#3f7338'][i % 3]), 0, 0, 0.005, 10).rotateX(Math.PI / 2));
-    pin.rotation.z = (rng(i + 9)() - 0.5) * 0.16;
-    pin.userData.phase = i * 1.7;
-    stickies.push(pin); boardG.add(pin);
-  });
-  boardG.position.set(0.5, 1.48, -0.585);
-  scene.add(boardG);
-  out.anim.stickies = stickies;
-
   // Пылинки в луче лампы
-  const N = 220, pos = new Float32Array(N * 3), seeds = new Float32Array(N);
-  const rr = rng(21);
-  for (let i = 0; i < N; i++) {
-    pos[i * 3] = -0.1 + rr() * 0.6; pos[i * 3 + 1] = TOP + rr() * 0.55; pos[i * 3 + 2] = -0.3 + rr() * 0.5; seeds[i] = rr() * 100;
-  }
+  const N = 260, pos = new Float32Array(N * 3), seeds = new Float32Array(N);
+  const rd = rng(21);
+  for (let i = 0; i < N; i++) { pos[i * 3] = -0.45 + rd() * 0.6; pos[i * 3 + 1] = TOP + rd() * 0.6; pos[i * 3 + 2] = -0.35 + rd() * 0.5; seeds[i] = rd() * 100; }
   const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const dust = new THREE.Points(dg, new THREE.PointsMaterial({ size: 0.004, map: soft(), transparent: true, opacity: 0, depthWrite: false, color: '#ffe2b0', blending: THREE.AdditiveBlending }));
+  const dust = new THREE.Points(dg, new THREE.PointsMaterial({ size: 0.0035, map: soft(), transparent: true, opacity: 0, depthWrite: false, color: '#ffe0b0', blending: THREE.AdditiveBlending }));
   dust.userData.seeds = seeds; dust.userData.base = Float32Array.from(pos);
-  scene.add(dust);
-  out.anim.dust = dust;
+  scene.add(dust); out.anim.dust = dust;
 
-  // Пар от кружки
   const steamTex = soft();
-  const steam = [];
-  for (let i = 0; i < 9; i++) {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamTex, color: '#fff3e0', transparent: true, opacity: 0, depthWrite: false }));
-    s.userData.t = i / 9; steam.push(s); scene.add(s);
+  out.anim.steam = [];
+  for (let i = 0; i < 10; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamTex, color: '#fff3e0', transparent: true, opacity: 0, depthWrite: false }));
+    sp.userData.t = i / 10; out.anim.steam.push(sp); scene.add(sp);
   }
-  out.anim.steam = steam;
 
   return out;
 }
 
-// Небо в окне по часам гостя: ночь, утро, день, вечер
+// Стикер: бумажный квадрат с загнутым нижним углом и надписью от руки
+function sticky(color, lines, size, seed) {
+  const [c, g] = canvas(256, 256);
+  g.fillStyle = color; g.fillRect(0, 0, 256, 256);
+  const r = rng(seed);
+  for (let i = 0; i < 1400; i++) { g.fillStyle = `rgba(90,60,20,${r() * 0.05})`; g.fillRect(r() * 256, r() * 256, 2, 2); }
+  const grad = g.createLinearGradient(0, 0, 0, 40); grad.addColorStop(0, 'rgba(0,0,0,.08)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 256, 40);
+  g.fillStyle = '#2b2f4a'; g.textAlign = 'center';
+  const total = lines.reduce((a, l) => a + l.s * 1.05, 0);
+  let y = 128 - total / 2 + 10;
+  lines.forEach((l, i) => {
+    y += l.s * (i ? 1.05 : 0.85);
+    g.save(); g.translate(128 + (r() - 0.5) * 10, y); g.rotate((r() - 0.5) * 0.08);
+    g.font = `${l.s}px Caveat, cursive`; g.fillText(l.t, 0, 0); g.restore();
+  });
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const geo = new THREE.PlaneGeometry(size, size, 10, 10);
+  const p = geo.attributes.position;
+  const rr = rng(seed + 1);
+  const curl = 0.004 + rr() * 0.008, side = rr() > 0.5 ? 1 : -1;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i) / size + 0.5, y = p.getY(i) / size + 0.5;   // 0..1
+    const corner = Math.max(0, (side > 0 ? x : 1 - x) - 0.45) * Math.max(0, 0.55 - y);
+    p.setZ(i, 0.0015 + (1 - y) * (1 - y) * curl + corner * corner * 0.35);
+  }
+  geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, side: THREE.DoubleSide }));
+  m.castShadow = true; m.receiveShadow = true;
+  // точка подвеса у верхнего края, чтобы стикер качался как приклеенный
+  m.position.y = -size / 2;
+  const pivot = new THREE.Group(); pivot.add(m);
+  return pivot;
+}
+
+// Небо в окне по часам гостя
 export function paintSky(sky, hour) {
   const { canvas: c, g, tex } = sky;
   const W = c.width, H = c.height;
   const phase = hour >= 22 || hour < 5 ? 'night' : hour < 10 ? 'morning' : hour < 18 ? 'day' : 'evening';
+  const pal = { night: ['#050916', '#16244d'], morning: ['#7fa7d8', '#f3c9a0'], day: ['#5d97d6', '#cfe3f3'], evening: ['#1b1f4a', '#d0704a'] }[phase];
   const grad = g.createLinearGradient(0, 0, 0, H);
-  const pal = {
-    night: ['#060b1d', '#13204a'], morning: ['#7fa7d8', '#f3c9a0'],
-    day: ['#5d97d6', '#bfdcf2'], evening: ['#1b1f4a', '#d0704a'],
-  }[phase];
   grad.addColorStop(0, pal[0]); grad.addColorStop(1, pal[1]);
   g.fillStyle = grad; g.fillRect(0, 0, W, H);
   const r = rng(77);
   if (phase === 'night' || phase === 'evening') {
-    for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(255,255,240,${0.3 + r() * 0.7})`; const s = r() > .9 ? 3 : 2; g.fillRect(r() * W, r() * H * 0.7, s, s); }
-    g.fillStyle = '#f5f0d8'; g.beginPath(); g.arc(W * 0.7, H * 0.25, 34, 0, Math.PI * 2); g.fill();
-    g.fillStyle = pal[0]; g.beginPath(); g.arc(W * 0.7 + 14, H * 0.25 - 8, 30, 0, Math.PI * 2); g.fill();
-  } else {
-    g.fillStyle = 'rgba(255,255,255,.75)';
-    for (const [x, y, s] of [[120, 120, 1], [360, 200, 1.3]]) { for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(x + k * 28 * s, y + (k % 2) * -10, 26 * s, 0, Math.PI * 2); g.fill(); } }
+    for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,240,${0.2 + r() * 0.7})`; const s = r() > 0.92 ? 2.5 : 1.4; g.beginPath(); g.arc(r() * W, r() * H * 0.6, s, 0, 7); g.fill(); }
+    const mg = g.createRadialGradient(W * 0.72, H * 0.22, 10, W * 0.72, H * 0.22, 120);
+    mg.addColorStop(0, 'rgba(255,250,220,.35)'); mg.addColorStop(1, 'rgba(255,250,220,0)');
+    g.fillStyle = mg; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#f5f0d8'; g.beginPath(); g.arc(W * 0.72, H * 0.22, 36, 0, 7); g.fill();
+    g.fillStyle = 'rgba(5,9,22,.92)'; g.beginPath(); g.arc(W * 0.72 + 16, H * 0.22 - 9, 33, 0, 7); g.fill();
   }
-  // силуэты домов с окнами
-  g.fillStyle = phase === 'day' ? '#4f5a6b' : '#0b0d16';
-  const rb = rng(5);
-  let x = 0;
-  while (x < W) {
-    const w = 60 + rb() * 80, h = 90 + rb() * 170;
-    g.fillRect(x, H - h, w, h);
-    for (let wy = H - h + 14; wy < H - 10; wy += 22) for (let wx = x + 10; wx < x + w - 10; wx += 18) {
-      if (rb() > (phase === 'day' ? 1 : 0.62)) { g.fillStyle = '#f2c46b'; g.fillRect(wx, wy, 8, 10); g.fillStyle = '#0b0d16'; }
+  // дальние и ближние дома с огнями
+  for (const [shade, minH, maxH, lightP] of [[phase === 'day' ? '#7d8796' : '#0e1426', 120, 300, 0.25], [phase === 'day' ? '#56606f' : '#080b14', 180, 420, 0.4]]) {
+    const rb = rng(minH);
+    let x = -20;
+    while (x < W) {
+      const w = 70 + rb() * 120, h = minH + rb() * (maxH - minH);
+      g.fillStyle = shade; g.fillRect(x, H - h, w, h);
+      if (phase !== 'day') for (let wy = H - h + 16; wy < H - 8; wy += 26) for (let wx = x + 10; wx < x + w - 12; wx += 20) {
+        if (rb() < lightP) { g.fillStyle = rb() > 0.3 ? '#f2c46b' : '#9fc4ff'; g.globalAlpha = 0.6 + rb() * 0.4; g.fillRect(wx, wy, 9, 12); g.globalAlpha = 1; }
+      }
+      x += w + 4;
     }
-    x += w + 6;
   }
   tex.needsUpdate = true;
   return phase;

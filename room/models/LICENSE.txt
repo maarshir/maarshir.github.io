@@ -1,0 +1,2 @@
+Модели, текстуры и карта освещения взяты с Poly Haven (polyhaven.com), лицензия CC0.
+Шрифт Caveat: SIL Open Font License 1.1, текст в fonts/OFL-Caveat.txt.
