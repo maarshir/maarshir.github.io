@@ -1,0 +1,104 @@
+@font-face {
+  font-family: 'Golos Text';
+  src: url(../assets/golos-text.woff2) format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  --night: #120d09;
+  --paper: #f4ecd8;
+  --amber: #f0c265;
+  --amber-dark: #b8862b;
+  --ink: #2b2139;
+  --muted: #b9ab93;
+  --font-pixel: 'Tiny5', ui-monospace, monospace;
+  --font-text: 'Golos Text', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--night); color: var(--paper); overflow: hidden; }
+body { font: 16px/1.5 var(--font-text); -webkit-tap-highlight-color: transparent; }
+
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; }
+body.pointer #scene { cursor: pointer; }
+
+.btn {
+  font: 15px/1 var(--font-pixel);
+  color: var(--paper);
+  background: rgba(18, 13, 9, .72);
+  border: 2px solid rgba(244, 236, 216, .55);
+  padding: 10px 14px;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+}
+.btn:hover { border-color: var(--amber); color: var(--amber); }
+.btn:focus-visible, .spots button:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+.btn-main { background: var(--amber); color: var(--ink); border-color: var(--amber); }
+.btn-main:hover { background: #ffd98a; color: var(--ink); }
+.btn-small { font-size: 13px; padding: 7px 10px; }
+.btn[disabled] { opacity: .6; cursor: progress; }
+
+.enter {
+  position: fixed; inset: 0; z-index: 10;
+  display: grid; place-items: center;
+  background: var(--night);
+  transition: opacity 1.4s ease;
+}
+.enter.gone { opacity: 0; pointer-events: none; }
+.enter-box { text-align: center; padding: 24px; max-width: 420px; }
+.enter-name { font: 40px/1.1 var(--font-pixel); margin: 0 0 10px; color: var(--paper); }
+.enter-line { margin: 0 0 28px; color: var(--muted); }
+.enter .btn-main { font-size: 20px; padding: 14px 34px; }
+.enter-note { margin: 18px 0 6px; font-size: 14px; color: var(--muted); }
+.enter-quick { font-size: 14px; color: var(--muted); }
+.enter-quick:hover { color: var(--amber); }
+
+.hud {
+  position: fixed; z-index: 5; left: 0; right: 0; top: 0;
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: max(14px, env(safe-area-inset-top)) 16px 0;
+  pointer-events: none;
+}
+.hud > * { pointer-events: auto; }
+.hud-right { margin-left: auto; display: flex; gap: 8px; }
+body:not(.inside) .hud { opacity: 0; }
+.hud { transition: opacity .8s ease .6s; }
+
+.spots { position: fixed; left: 16px; bottom: 16px; z-index: 6; display: flex; flex-direction: column; gap: 6px; }
+.spots button {
+  position: absolute; left: -9999px;
+  font: 14px var(--font-pixel); color: var(--ink); background: var(--amber); border: 0; padding: 8px 12px;
+}
+.spots button:focus-visible { position: static; }
+
+.tip {
+  position: fixed; z-index: 6; margin: 0; pointer-events: none;
+  font: 14px/1 var(--font-pixel); color: var(--ink); background: var(--amber);
+  padding: 6px 8px; transform: translate(14px, 14px); white-space: nowrap;
+}
+.hint {
+  position: fixed; z-index: 5; left: 50%; bottom: max(22px, env(safe-area-inset-bottom));
+  transform: translateX(-50%); margin: 0;
+  font: 15px/1 var(--font-pixel); color: var(--paper); opacity: .8;
+  animation: breathe 2.6s ease-in-out infinite;
+}
+@keyframes breathe { 50% { opacity: .35; } }
+
+.contacts {
+  position: fixed; z-index: 6; left: 50%; bottom: max(22px, env(safe-area-inset-bottom));
+  transform: translateX(-50%); display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  animation: rise .6s ease both;
+}
+@keyframes rise { from { opacity: 0; transform: translate(-50%, 10px); } }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.noscript { position: fixed; inset: auto 16px 16px; z-index: 20; }
+.noscript a { color: var(--amber); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+[hidden] { display: none !important; }

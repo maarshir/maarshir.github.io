@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Комната, Иван Капустин</title>
+<meta name="description" content="Иван Капустин, разработчик. Комната с компьютером, дипломом и телефоном: проекты, учёба и контакты.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../fonts/tiny5.css">
+<link rel="stylesheet" href="room.css">
+<script type="importmap">
+{ "imports": {
+  "three": "../vendor/three/three.module.min.js",
+  "three/addons/": "../vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<div id="enter" class="enter">
+  <div class="enter-box">
+    <p class="enter-name">Иван Капустин</p>
+    <p class="enter-line">Разработчик: боты, веб, автоматизация</p>
+    <button id="enter-btn" class="btn btn-main" type="button" disabled>Загрузка</button>
+    <p class="enter-note">Со звуком. Наденьте наушники, если вокруг тихо.</p>
+    <a class="enter-quick" href="../">Быстрая версия без анимации</a>
+  </div>
+</div>
+
+<nav class="hud" id="hud" aria-label="Комната">
+  <button id="back" class="btn" type="button" hidden>К столу</button>
+  <div class="hud-right">
+    <button id="mute" class="btn btn-small" type="button" aria-pressed="false">Звук: вкл</button>
+    <a class="btn btn-small" href="../">Быстрая версия</a>
+  </div>
+</nav>
+
+<div class="spots" id="spots">
+  <button type="button" data-spot="computer">Компьютер: проекты</button>
+  <button type="button" data-spot="diploma">Диплом: учёба</button>
+  <button type="button" data-spot="phone">Телефон: контакты</button>
+</div>
+
+<p id="tip" class="tip" hidden></p>
+<p id="hint" class="hint" hidden>Нажмите на компьютер</p>
+
+<div id="contacts" class="contacts" hidden>
+  <a class="btn btn-main" href="https://t.me/kaioann" target="_blank" rel="noopener">Телеграм</a>
+  <a class="btn" href="mailto:ivan_ius@mail.ru">Почта</a>
+  <a class="btn" href="https://github.com/maarshir" target="_blank" rel="noopener">Гитхаб</a>
+</div>
+
+<section id="sr" class="sr-only" aria-live="polite"></section>
+
+<noscript><p class="noscript">Комната работает с JavaScript. <a href="../">Открыть обычную версию</a>.</p></noscript>
+<script type="module" src="js/main.mjs"></script>
+</body>
+</html>
