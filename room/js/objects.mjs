@@ -8,6 +8,20 @@ import { paper, soft, canvas, rng } from './textures.mjs';
 
 export const TOP = 0.76;
 
+// Двоичный файл по адресу; в предпросмотре без .glb и .hdr тот же файл лежит рядом как base64 в .json
+export async function fetchBin(url, manager) {
+  manager?.itemStart(url);
+  try {
+    if (window.ROOM_B64) {
+      const { b64 } = await fetch(url + '.json').then(r => r.json());
+      const bin = atob(b64), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return u8.buffer;
+    }
+    return await fetch(url).then(r => r.arrayBuffer());
+  } finally { manager?.itemEnd(url); }
+}
+
 const shadow = (m) => { m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return m; };
 function mesh(geo, mat, x = 0, y = 0, z = 0) { const m = shadow(new THREE.Mesh(geo, mat)); m.position.set(x, y, z); return m; }
 const rbox = (w, h, d, r, mat, x, y, z) => mesh(new RoundedBoxGeometry(w, h, d, 4, r), mat, x, y, z);
@@ -15,7 +29,7 @@ const rbox = (w, h, d, r, mat, x, y, z) => mesh(new RoundedBoxGeometry(w, h, d, 
 export async function buildRoom(scene, manager, { projects }) {
   const gltf = new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder);
   const texLoader = new THREE.TextureLoader(manager);
-  const load = (id) => gltf.loadAsync(`models/${id}.glb`).then(g => shadow(g.scene));
+  const load = (id) => fetchBin(`models/${id}.glb`, manager).then(buf => gltf.parseAsync(buf, '')).then(g => shadow(g.scene));
 
   // PBR-материал из трёх карт: цвет, рельеф, затенение/шероховатость/металл
   function pbr(name, repeat = [1, 1], extra = {}) {

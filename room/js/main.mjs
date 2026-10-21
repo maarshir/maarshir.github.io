@@ -7,7 +7,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { buildRoom, paintSky, TOP } from './objects.mjs';
+import { buildRoom, paintSky, TOP, fetchBin } from './objects.mjs';
 import { createScreen } from './screen.mjs';
 import * as sound from './audio.mjs';
 
@@ -43,7 +43,11 @@ const projects = await fetch('../data/projects.json').then(r => r.json()).catch(
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_, done, total) => { const b = $('enter-btn'); if (b.disabled) b.textContent = `Загрузка ${Math.round(done / total * 100)}%`; };
 const pmrem = new THREE.PMREMGenerator(renderer);
-new RGBELoader(manager).load('hdri/fireplace.hdr', (hdr) => {
+fetchBin('hdri/fireplace.hdr', manager).then((buf) => {
+  const d = new RGBELoader().parse(buf);
+  const hdr = new THREE.DataTexture(d.data, d.width, d.height, THREE.RGBAFormat, d.type);
+  hdr.colorSpace = THREE.LinearSRGBColorSpace; hdr.mapping = THREE.EquirectangularReflectionMapping; hdr.flipY = true;
+  hdr.minFilter = hdr.magFilter = THREE.LinearFilter; hdr.generateMipmaps = false; hdr.needsUpdate = true;
   scene.environment = pmrem.fromEquirectangular(hdr).texture;
   scene.environmentIntensity = 0.32;
   hdr.dispose();
