@@ -23,6 +23,12 @@
       "text": "Навыки для ИИ-агентов (Claude Code, Codex, Cursor): проверяют курсовые, ВКР и списки литературы по ГОСТ 7.32 и ГОСТ Р 7.0.100 и показывают, что и где исправить в Word."
     },
     {
+      "title": "interview-prep",
+      "url": "https://github.com/maarshir/interview-prep",
+      "tag": "Python, навыки агентов, API hh.ru",
+      "text": "Навык для ИИ-агентов: пробное собеседование по вакансии с вопросами по одному и разбор ответов по шести критериям с цитатами. Вакансию с hh.ru делит на разделы скрипт."
+    },
+    {
       "title": "job-radar и content-factory",
       "url": "https://github.com/maarshir/job-radar",
       "tag": "n8n, Node.js, Docker, свой сервер",
