@@ -74,8 +74,8 @@ test('окно проекта собрано из data/projects.json', () => {
 
 test('здание без проекта: «пусто» и путь к проектам, а не «данные не загрузились»', () => {
   const garden = byId('garden');
-  assert.ok(!projects.some((p) => p.building === garden.name), 'тест рассчитан на пустой Сад желаний');
-  const d = dialogFor(garden, profile, projects);
+  const others = projects.filter((p) => p.building !== garden.name);
+  const d = dialogFor(garden, profile, others);
   assert.ok(!d.missing);
   assert.match(d.paragraphs[0], /пусто/);
   assert.deepEqual(d.links, [{ label: 'К проектам', url: '#projects', external: false }]);
